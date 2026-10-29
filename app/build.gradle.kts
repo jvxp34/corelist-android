@@ -20,6 +20,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
+
+        // APK menor para um aparelho só: -Pcomprafacil.abi=x86_64 (emulador) ou arm64-v8a.
+        (findProperty("comprafacil.abi") as String?)?.let { ndk { abiFilters += it } }
     }
 
     buildTypes {

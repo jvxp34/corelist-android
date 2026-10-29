@@ -84,6 +84,19 @@ No emulador, a câmera traseira é uma cena virtual: para testar a nota, use
 Para instalar pelo cabo: ative **Opções do desenvolvedor › Depuração USB** no
 celular e use Run no Android Studio, ou `adb install -r <apk>`.
 
+### Testar em outro computador
+
+1. Copie o projeto (o `.zip` gerado com `git archive`, ou clone o repositório
+   quando ele existir no GitHub) e descompacte.
+2. Instale o Android Studio e abra a pasta `corelist-android`. O `local.properties`
+   (caminho do SDK) é criado sozinho na primeira abertura.
+3. Sem o Django rodando nessa máquina, use a variante **release** (menu
+   **Build › Select Build Variant › app: release**): ela usa o site publicado e
+   roda direto pelo botão Run. Entre com uma conta que já exista no site.
+4. Ou mantenha o debug e aponte para o site publicado, acrescentando no
+   `gradle.properties` do projeto:
+   `comprafacil.apiUrl=https://mvp-comprafacil.dql3968zgbfv8.amplifyapp.com/api`
+
 ## Gerar o APK
 
 No Windows, sem `JAVA_HOME`, use o Java do Android Studio:
@@ -100,6 +113,9 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 |---|---|
 | `./gradlew assembleDebug` | `app/build/outputs/apk/debug/app-debug.apk` |
 | `./gradlew assembleRelease` | `app/build/outputs/apk/release/app-release.apk` |
+
+Para um APK menor, só para um tipo de aparelho, acrescente
+`-Pcomprafacil.abi=x86_64` (emulador) ou `-Pcomprafacil.abi=arm64-v8a` (celular).
 
 O **release** é o que se entrega (aponta para o site publicado e passa pelo R8, que
 o deixa bem menor). Para a apresentação ele é assinado com a chave de debug, o
