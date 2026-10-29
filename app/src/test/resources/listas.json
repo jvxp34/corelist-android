@@ -1,0 +1,342 @@
+[
+ {
+  "id": 69,
+  "name": "Compra do mês passado",
+  "budget": "250.00",
+  "is_completed": true,
+  "completed_at": "2026-09-24T13:11:12.098037Z",
+  "store": "",
+  "nfce_key": "",
+  "items": [
+   {
+    "id": 282,
+    "list": 69,
+    "product": 15,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "24.90",
+    "subtotal": "24.90",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.121510Z",
+    "updated_at": "2026-10-29T13:11:12.121532Z"
+   },
+   {
+    "id": 283,
+    "list": 69,
+    "product": 16,
+    "quantity": "2.00",
+    "measure": "unit",
+    "price": "8.90",
+    "subtotal": "17.80",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.129042Z",
+    "updated_at": "2026-10-29T13:11:12.129064Z"
+   },
+   {
+    "id": 284,
+    "list": 69,
+    "product": 17,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "16.90",
+    "subtotal": "16.90",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.130969Z",
+    "updated_at": "2026-10-29T13:11:12.130983Z"
+   },
+   {
+    "id": 285,
+    "list": 69,
+    "product": 14,
+    "quantity": "2.00",
+    "measure": "unit",
+    "price": "8.49",
+    "subtotal": "16.98",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.133241Z",
+    "updated_at": "2026-10-29T13:11:12.133259Z"
+   },
+   {
+    "id": 286,
+    "list": 69,
+    "product": 19,
+    "quantity": "2.00",
+    "measure": "unit",
+    "price": "7.90",
+    "subtotal": "15.80",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.135740Z",
+    "updated_at": "2026-10-29T13:11:12.135769Z"
+   }
+  ],
+  "total": "92.38",
+  "history_comparison": {
+   "current_total": "92.38",
+   "historical_average": "41.19",
+   "difference": "51.19",
+   "percentage_change": "124.30"
+  },
+  "created_at": "2026-10-29T13:11:12.098755Z",
+  "updated_at": "2026-10-29T13:11:12.098763Z"
+ },
+ {
+  "id": 70,
+  "name": "Feira",
+  "budget": "100.00",
+  "is_completed": true,
+  "completed_at": "2026-10-19T13:11:12.098037Z",
+  "store": "",
+  "nfce_key": "",
+  "items": [
+   {
+    "id": 287,
+    "list": 70,
+    "product": 15,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "23.90",
+    "subtotal": "23.90",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.141710Z",
+    "updated_at": "2026-10-29T13:11:12.141733Z"
+   },
+   {
+    "id": 288,
+    "list": 70,
+    "product": 16,
+    "quantity": "2.00",
+    "measure": "unit",
+    "price": "8.50",
+    "subtotal": "17.00",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.152192Z",
+    "updated_at": "2026-10-29T13:11:12.152211Z"
+   },
+   {
+    "id": 289,
+    "list": 70,
+    "product": 14,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "7.99",
+    "subtotal": "7.99",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.154397Z",
+    "updated_at": "2026-10-29T13:11:12.154418Z"
+   },
+   {
+    "id": 290,
+    "list": 70,
+    "product": 18,
+    "quantity": "6.00",
+    "measure": "unit",
+    "price": "2.49",
+    "subtotal": "14.94",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.157329Z",
+    "updated_at": "2026-10-29T13:11:12.157356Z"
+   }
+  ],
+  "total": "63.83",
+  "history_comparison": {
+   "current_total": "63.83",
+   "historical_average": "50.70",
+   "difference": "13.13",
+   "percentage_change": "25.89"
+  },
+  "created_at": "2026-10-29T13:11:12.138469Z",
+  "updated_at": "2026-10-29T13:11:12.138478Z"
+ },
+ {
+  "id": 71,
+  "name": "Lanche da semana",
+  "budget": "60.00",
+  "is_completed": true,
+  "completed_at": "2026-10-26T13:11:12.098037Z",
+  "store": "",
+  "nfce_key": "",
+  "items": [
+   {
+    "id": 291,
+    "list": 71,
+    "product": 17,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "17.50",
+    "subtotal": "17.50",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.163240Z",
+    "updated_at": "2026-10-29T13:11:12.163258Z"
+   },
+   {
+    "id": 292,
+    "list": 71,
+    "product": 19,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "8.50",
+    "subtotal": "8.50",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.165355Z",
+    "updated_at": "2026-10-29T13:11:12.165378Z"
+   },
+   {
+    "id": 293,
+    "list": 71,
+    "product": 18,
+    "quantity": "4.00",
+    "measure": "unit",
+    "price": "2.69",
+    "subtotal": "10.76",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.167997Z",
+    "updated_at": "2026-10-29T13:11:12.168026Z"
+   }
+  ],
+  "total": "36.76",
+  "history_comparison": {
+   "current_total": "36.76",
+   "historical_average": "59.73",
+   "difference": "-22.97",
+   "percentage_change": "-38.45"
+  },
+  "created_at": "2026-10-29T13:11:12.160602Z",
+  "updated_at": "2026-10-29T13:11:12.160615Z"
+ },
+ {
+  "id": 72,
+  "name": "Compra da semana",
+  "budget": "150.00",
+  "is_completed": false,
+  "completed_at": null,
+  "store": "",
+  "nfce_key": "",
+  "items": [
+   {
+    "id": 294,
+    "list": 72,
+    "product": 15,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "21.90",
+    "subtotal": "21.90",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:11:12.173205Z",
+    "updated_at": "2026-10-29T13:11:12.173248Z"
+   },
+   {
+    "id": 295,
+    "list": 72,
+    "product": 14,
+    "quantity": "3.00",
+    "measure": "unit",
+    "price": "6.99",
+    "subtotal": "20.97",
+    "is_completed": false,
+    "created_at": "2026-10-29T13:11:12.177038Z",
+    "updated_at": "2026-10-29T13:11:12.177056Z"
+   },
+   {
+    "id": 296,
+    "list": 72,
+    "product": 17,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "14.90",
+    "subtotal": "14.90",
+    "is_completed": false,
+    "created_at": "2026-10-29T13:11:12.178715Z",
+    "updated_at": "2026-10-29T13:11:12.178729Z"
+   },
+   {
+    "id": 297,
+    "list": 72,
+    "product": 16,
+    "quantity": "2.00",
+    "measure": "unit",
+    "price": "9.20",
+    "subtotal": "18.40",
+    "is_completed": false,
+    "created_at": "2026-10-29T13:11:12.180391Z",
+    "updated_at": "2026-10-29T13:11:12.180402Z"
+   },
+   {
+    "id": 298,
+    "list": 72,
+    "product": 18,
+    "quantity": "5.00",
+    "measure": "unit",
+    "price": "1.99",
+    "subtotal": "9.95",
+    "is_completed": false,
+    "created_at": "2026-10-29T13:11:12.181987Z",
+    "updated_at": "2026-10-29T13:11:12.182005Z"
+   },
+   {
+    "id": 299,
+    "list": 72,
+    "product": 19,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "6.99",
+    "subtotal": "6.99",
+    "is_completed": false,
+    "created_at": "2026-10-29T13:11:12.183583Z",
+    "updated_at": "2026-10-29T13:11:12.183602Z"
+   }
+  ],
+  "total": "93.11",
+  "history_comparison": {
+   "current_total": "93.11",
+   "historical_average": "53.98",
+   "difference": "39.12",
+   "percentage_change": "72.47"
+  },
+  "created_at": "2026-10-29T13:11:12.170442Z",
+  "updated_at": "2026-10-29T13:11:12.170457Z"
+ },
+ {
+  "id": 73,
+  "name": "Compra",
+  "budget": "50.00",
+  "is_completed": true,
+  "completed_at": "2026-10-24T22:07:16Z",
+  "store": "CARREFOUR COMERCIO E INDUSTRIA LTDA",
+  "nfce_key": "13261045543915041619650070005458599621493446",
+  "items": [
+   {
+    "id": 300,
+    "list": 73,
+    "product": 39,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "14.98",
+    "subtotal": "14.98",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:17:53.211513Z",
+    "updated_at": "2026-10-29T13:17:53.211533Z"
+   },
+   {
+    "id": 301,
+    "list": 73,
+    "product": 40,
+    "quantity": "1.00",
+    "measure": "unit",
+    "price": "7.99",
+    "subtotal": "7.99",
+    "is_completed": true,
+    "created_at": "2026-10-29T13:17:53.227437Z",
+    "updated_at": "2026-10-29T13:17:53.227455Z"
+   }
+  ],
+  "total": "22.97",
+  "history_comparison": {
+   "current_total": "22.97",
+   "historical_average": "64.32",
+   "difference": "-41.35",
+   "percentage_change": "-64.29"
+  },
+  "created_at": "2026-10-29T13:14:47.118214Z",
+  "updated_at": "2026-10-29T13:17:53.233998Z"
+ }
+]
