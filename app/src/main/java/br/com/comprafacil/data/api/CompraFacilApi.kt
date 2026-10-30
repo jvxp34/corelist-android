@@ -71,4 +71,16 @@ interface CompraFacilApi {
 
     @POST("lists/nfce/importar/")
     suspend fun importarNota(@Body corpo: ImportarNota): Lista
+
+    /** Lê a nota e cruza com a lista em andamento: comprados, fora da lista e esquecidos. */
+    @POST("lists/{id}/nfce/ler/")
+    suspend fun lerNotaNaLista(@Path("id") listaId: Int, @Body corpo: LinkNota): CruzamentoNota
+
+    /** Conclui a lista com os preços e quantidades da nota. 409 = nota já importada. */
+    @POST("lists/{id}/nfce/concluir/")
+    suspend fun concluirComNota(@Path("id") listaId: Int, @Body corpo: ConcluirComNota): Lista
+
+    /** Cria uma lista nova em andamento com produtos de uma compra. */
+    @POST("lists/{id}/repetir/")
+    suspend fun repetirLista(@Path("id") listaId: Int, @Body corpo: RepetirLista): Lista
 }

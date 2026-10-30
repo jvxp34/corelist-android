@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.DeleteOutline
@@ -83,7 +85,12 @@ import br.com.comprafacil.ui.comum.situacaoDoOrcamento
 import br.com.comprafacil.ui.theme.Cores
 
 @Composable
-fun TelaCompra(listaId: Int, onVoltar: () -> Unit) {
+fun TelaCompra(
+    listaId: Int,
+    onVoltar: () -> Unit,
+    onConcluirComNota: () -> Unit,
+    onAbrirLista: (Int) -> Unit,
+) {
     val vm = appViewModel(key = "compra-$listaId") { CompraViewModel(it, listaId) }
     val snackbar = remember { SnackbarHostState() }
     var menu by remember { mutableStateOf(false) }
@@ -162,6 +169,10 @@ fun TelaCompra(listaId: Int, onVoltar: () -> Unit) {
                             icone = Icons.Default.Check,
                             carregando = vm.salvando && confirmarConclusao,
                         )
+                        TextButton(onClick = onConcluirComNota, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Outlined.QrCodeScanner, null, modifier = Modifier.padding(end = 8.dp))
+                            Text("Já comprou? Concluir com a nota fiscal")
+                        }
                     }
                 }
             }
@@ -177,6 +188,8 @@ fun TelaCompra(listaId: Int, onVoltar: () -> Unit) {
                     onMarcar = vm::alternarComprado,
                     onEditar = { editandoId = it.id },
                     onAdicionar = { adicionando = true },
+                    passando = vm.salvando,
+                    onPassarParaProxima = { ids -> vm.passarParaProxima(ids, onAbrirLista) },
                 )
             }
         }
@@ -269,6 +282,8 @@ private fun ConteudoCompra(
     onMarcar: (Item) -> Unit,
     onEditar: (Item) -> Unit,
     onAdicionar: () -> Unit,
+    passando: Boolean,
+    onPassarParaProxima: (List<Int>) -> Unit,
 ) {
     val faltam = lista.items.filter { !it.comprado }
     val noCarrinho = lista.items.filter { it.comprado }
@@ -307,8 +322,24 @@ private fun ConteudoCompra(
         }
 
         if (lista.concluida) {
-            if (lista.items.isNotEmpty()) item { TituloSecao("Itens (${lista.items.size})", "Toque num item para corrigir o preço ou a quantidade.") }
-            items(lista.items, key = { it.id }) { LinhaItem(it, nomeDoProduto(it.product), onMarcar, onEditar, mostrarCheck = false) }
+            // Numa compra concluída, item sem marcar quer dizer "não comprado".
+            if (noCarrinho.isNotEmpty()) {
+                item { TituloSecao("Itens (${noCarrinho.size})", "Toque num item para corrigir o preço ou a quantidade.") }
+                items(noCarrinho, key = { it.id }) { LinhaItem(it, nomeDoProduto(it.product), onMarcar, onEditar, mostrarCheck = false) }
+            }
+            if (faltam.isNotEmpty()) {
+                item { TituloSecao("Não comprados (${faltam.size})") }
+                items(faltam, key = { it.id }) { LinhaItem(it, nomeDoProduto(it.product), onMarcar, onEditar, mostrarCheck = false) }
+                item {
+                    br.com.comprafacil.ui.comum.BotaoSecundario(
+                        "Passar para a próxima lista",
+                        { onPassarParaProxima(faltam.map { it.id }) },
+                        Modifier.fillMaxWidth().padding(top = 4.dp),
+                        icone = Icons.AutoMirrored.Filled.ArrowForward,
+                        habilitado = !passando,
+                    )
+                }
+            }
         } else {
             if (faltam.isNotEmpty()) {
                 item { TituloSecao("Falta pegar (${faltam.size})") }

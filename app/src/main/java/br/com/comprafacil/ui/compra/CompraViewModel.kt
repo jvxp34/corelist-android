@@ -12,6 +12,7 @@ import br.com.comprafacil.data.api.NovoItem
 import br.com.comprafacil.data.api.NovoProduto
 import br.com.comprafacil.data.api.Produto
 import br.com.comprafacil.data.api.ProdutoBusca
+import br.com.comprafacil.data.api.RepetirLista
 import br.com.comprafacil.data.api.Resultado
 import br.com.comprafacil.data.api.chamar
 import br.com.comprafacil.data.api.exigirSucesso
@@ -197,6 +198,14 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
         executar({ app.api.concluirLista(listaId) }) {
             lista = it
             _mensagens.send("Compra concluída! Ela foi para as compras concluídas.")
+        }
+    }
+
+    /** Cria uma lista nova com estes itens (por exemplo, os não comprados). */
+    fun passarParaProxima(itens: List<Int>, onOk: (Int) -> Unit) {
+        executar({ app.api.repetirLista(listaId, RepetirLista(itens = itens)) }) { nova ->
+            _mensagens.send("Lista “${nova.name}” criada com ${nova.items.size} ${if (nova.items.size == 1) "item" else "itens"}.")
+            onOk(nova.id)
         }
     }
 

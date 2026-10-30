@@ -58,6 +58,7 @@ import br.com.comprafacil.ui.inicio.TelaInicio
 import br.com.comprafacil.ui.listas.TelaListas
 import br.com.comprafacil.ui.nota.TelaConferirNota
 import br.com.comprafacil.ui.nota.TelaLerNota
+import br.com.comprafacil.ui.nota.TelaNotaNaLista
 import br.com.comprafacil.ui.produtos.TelaMenorPreco
 import br.com.comprafacil.ui.produtos.TelaProdutos
 import br.com.comprafacil.ui.theme.Cores
@@ -72,6 +73,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class RotaCompra(val id: Int)
 @Serializable object RotaLerNota
 @Serializable data class RotaConferirNota(val link: String)
+@Serializable data class RotaLerNotaDaLista(val listaId: Int)
+@Serializable data class RotaNotaNaLista(val listaId: Int, val link: String)
 
 private fun NavHostController.irParaInicio(rota: Any) = navigate(rota) {
     popUpTo(graph.id) { inclusive = true }
@@ -154,7 +157,41 @@ fun Navegacao(app: AppContainer) {
             composable<RotaProdutos> { TelaProdutos() }
             composable<RotaMenorPreco> { TelaMenorPreco() }
             composable<RotaCompra> { e ->
-                TelaCompra(listaId = e.toRoute<RotaCompra>().id, onVoltar = { nav.popBackStack() })
+                val id = e.toRoute<RotaCompra>().id
+                TelaCompra(
+                    listaId = id,
+                    onVoltar = { nav.popBackStack() },
+                    onConcluirComNota = { nav.navigate(RotaLerNotaDaLista(id)) },
+                    onAbrirLista = { nova -> nav.navigate(RotaCompra(nova)) { popUpTo<RotaCompra> { inclusive = true } } },
+                )
+            }
+            composable<RotaLerNotaDaLista> { e ->
+                val id = e.toRoute<RotaLerNotaDaLista>().listaId
+                TelaLerNota(
+                    titulo = "Concluir com a nota fiscal",
+                    onVoltar = { nav.popBackStack() },
+                    onLinkLido = { link ->
+                        nav.navigate(RotaNotaNaLista(id, link)) { popUpTo<RotaLerNotaDaLista> { inclusive = true } }
+                    },
+                )
+            }
+            composable<RotaNotaNaLista> { e ->
+                val r = e.toRoute<RotaNotaNaLista>()
+                TelaNotaNaLista(
+                    listaId = r.listaId,
+                    link = r.link,
+                    onVoltar = { nav.popBackStack() },
+                    onLerOutra = {
+                        nav.navigate(RotaLerNotaDaLista(r.listaId)) { popUpTo<RotaNotaNaLista> { inclusive = true } }
+                    },
+                    onAbrirLista = { id ->
+                        nav.navigate(RotaCompra(id)) { popUpTo<RotaCompra> { inclusive = true } }
+                    },
+                    // A lista vira compra concluída: reabre a tela dela com os dados novos.
+                    onConcluida = { id ->
+                        nav.navigate(RotaCompra(id)) { popUpTo<RotaCompra> { inclusive = true } }
+                    },
+                )
             }
             composable<RotaLerNota> {
                 TelaLerNota(

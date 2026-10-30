@@ -200,7 +200,7 @@ fun TelaConferirNota(
 }
 
 @Composable
-private fun Lendo() {
+internal fun Lendo() {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -241,7 +241,7 @@ private fun Etapa(texto: String, feita: Boolean) {
 }
 
 @Composable
-private fun FalhaLeitura(mensagem: String, onTentar: () -> Unit, onLerOutra: () -> Unit) {
+internal fun FalhaLeitura(mensagem: String, onTentar: () -> Unit, onLerOutra: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Não deu para ler a nota", style = MaterialTheme.typography.headlineSmall)
         AvisoErro(mensagem)
@@ -251,7 +251,7 @@ private fun FalhaLeitura(mensagem: String, onTentar: () -> Unit, onLerOutra: () 
 }
 
 @Composable
-private fun JaImportada(onVer: () -> Unit, onLerOutra: () -> Unit) {
+internal fun JaImportada(onVer: () -> Unit, onLerOutra: () -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

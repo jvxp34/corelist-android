@@ -200,6 +200,68 @@ data class NotaLida(
     @SerialName("lista_importada") val listaImportada: Int? = null,
 )
 
+// ---- Nota fiscal dentro de uma lista em andamento ----
+
+@Serializable
+data class ProdutoSugerido(val id: Int, val name: String, val motivo: String? = null)
+
+/** Item da nota já cruzado com a lista: [listItem] é o item que casou (null = fora da lista). */
+@Serializable
+data class ItemNotaNaLista(
+    val indice: Int,
+    val nome: String,
+    @SerialName("codigo_loja") val codigoLoja: String? = null,
+    val medida: String = MEDIDA_UNIDADE,
+    val quantidade: Decimal,
+    val preco: Decimal,
+    val total: Decimal,
+    @SerialName("list_item") val listItem: Int? = null,
+    val motivo: String? = null,
+    @SerialName("produto_sugerido") val produtoSugerido: ProdutoSugerido? = null,
+) {
+    val porKg: Boolean get() = medida == MEDIDA_KG
+}
+
+/** Item planejado na lista, como a rota de leitura devolve. */
+@Serializable
+data class ItemListaNaNota(
+    val id: Int,
+    val nome: String,
+    val quantidade: Decimal = BigDecimal.ONE,
+    val medida: String = MEDIDA_UNIDADE,
+    val preco: Decimal? = null,
+)
+
+@Serializable
+data class CruzamentoNota(
+    val chave: String = "",
+    val loja: String = "",
+    val endereco: String? = null,
+    @SerialName("emitida_em") val emitidaEm: String? = null,
+    val total: Decimal,
+    val orcamento: Decimal? = null,
+    val itens: List<ItemNotaNaLista> = emptyList(),
+    @SerialName("itens_lista") val itensLista: List<ItemListaNaNota> = emptyList(),
+    val esquecidos: List<Int> = emptyList(),
+    @SerialName("lista_importada") val listaImportada: Int? = null,
+)
+
+/** O que a pessoa decidiu para cada item da nota ao concluir. */
+@Serializable
+data class EscolhaItemNota(
+    val indice: Int,
+    @SerialName("list_item") val listItem: Int? = null,
+    val produto: Int? = null,
+    val nome: String,
+)
+
+@Serializable
+data class ConcluirComNota(val link: String, val itens: List<EscolhaItemNota>)
+
+/** Corpo de lists/<id>/repetir/: sem [itens], o servidor copia os comprados. */
+@Serializable
+data class RepetirLista(val nome: String? = null, val itens: List<Int>? = null)
+
 @Serializable
 data class ItemImportar(
     val nome: String,

@@ -72,7 +72,11 @@ fun ehLinkDeNota(texto: String): Boolean {
 }
 
 @Composable
-fun TelaLerNota(onVoltar: () -> Unit, onLinkLido: (String) -> Unit) {
+fun TelaLerNota(
+    onVoltar: () -> Unit,
+    onLinkLido: (String) -> Unit,
+    titulo: String = "Ler nota fiscal",
+) {
     val context = LocalContext.current
     var temPermissao by remember {
         mutableStateOf(
@@ -113,7 +117,7 @@ fun TelaLerNota(onVoltar: () -> Unit, onLinkLido: (String) -> Unit) {
         ) {
             BotaoRedondo(onVoltar, "Voltar", Icons.AutoMirrored.Filled.ArrowBack)
             Text(
-                "Ler nota fiscal",
+                titulo,
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.White,
                 textAlign = TextAlign.Center,
