@@ -72,6 +72,13 @@ interface CompraFacilApi {
     @POST("lists/nfce/importar/")
     suspend fun importarNota(@Body corpo: ImportarNota): Lista
 
+    /** Preços da cidade. Sem [termo], os mais recentes. [dias]: 7, 30 ou 90. */
+    @GET("lists/precos/")
+    suspend fun precos(@Query("q") termo: String, @Query("dias") dias: Int): PrecosDaCidade
+
+    @GET("lists/{id}/precos/")
+    suspend fun precosDaLista(@Path("id") listaId: Int): PrecosDaLista
+
     /** Lê a nota e cruza com a lista em andamento: comprados, fora da lista e esquecidos. */
     @POST("lists/{id}/nfce/ler/")
     suspend fun lerNotaNaLista(@Path("id") listaId: Int, @Body corpo: LinkNota): CruzamentoNota

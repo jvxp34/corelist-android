@@ -169,6 +169,83 @@ data class ConsultaCodigo(
     val sugestao: SugestaoProduto? = null,
 )
 
+// ---- Preços da cidade (vêm das notas lidas: loja, preço e data, nunca quem comprou) ----
+
+@Serializable
+data class Loja(
+    val id: Int,
+    /** Razão social da nota ("SENDAS DISTRIBUIDORA S/A"). */
+    val nome: String,
+    /** Nome conhecido da rede ("Assaí Atacadista"). */
+    val marca: String? = null,
+    /** assai, atacadao, carrefour ou db: o logo em res/drawable/loja_<icone>.png. */
+    val icone: String? = null,
+    val endereco: String? = null,
+)
+
+@Serializable
+data class PrecoNaLoja(
+    val loja: Loja,
+    val preco: Decimal,
+    val medida: String = MEDIDA_UNIDADE,
+    val data: String,
+    /** Mais de 1 dia: o preço pode ter mudado. */
+    val desatualizado: Boolean = false,
+)
+
+@Serializable
+data class MenorNoPeriodo(
+    val preco: Decimal,
+    val medida: String = MEDIDA_UNIDADE,
+    val loja: Loja,
+    val data: String,
+    val dias: Int,
+)
+
+@Serializable
+data class ProdutoDoPreco(
+    val id: Int,
+    val name: String,
+    val brand: String? = null,
+    val embalagem: String? = null,
+    @SerialName("image_url") val imagem: String? = null,
+)
+
+@Serializable
+data class ResumoPreco(
+    val produto: ProdutoDoPreco,
+    @SerialName("mais_barato_agora") val maisBaratoAgora: PrecoNaLoja? = null,
+    @SerialName("menor_no_periodo") val menorNoPeriodo: MenorNoPeriodo? = null,
+    val lojas: List<PrecoNaLoja> = emptyList(),
+)
+
+@Serializable
+data class PrecosDaCidade(val dias: Int = 30, val produtos: List<ResumoPreco> = emptyList())
+
+@Serializable
+data class PrecoDoItem(
+    val item: Int,
+    @SerialName("mais_barato_agora") val maisBaratoAgora: PrecoNaLoja? = null,
+    @SerialName("lojas_com_preco") val lojasComPreco: Int = 0,
+)
+
+@Serializable
+data class MelhorLoja(
+    val loja: Loja,
+    val total: Decimal,
+    val itens: Int,
+    val desatualizados: Int = 0,
+)
+
+/** Preços da cidade para uma lista em andamento. */
+@Serializable
+data class PrecosDaLista(
+    @SerialName("total_itens") val totalItens: Int = 0,
+    val itens: List<PrecoDoItem> = emptyList(),
+    /** Primeiro a loja com mais itens com preço, depois o menor total. */
+    @SerialName("melhor_loja") val melhorLoja: List<MelhorLoja> = emptyList(),
+)
+
 // ---- Nota fiscal (NFC-e) ----
 
 @Serializable

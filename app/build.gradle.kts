@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)

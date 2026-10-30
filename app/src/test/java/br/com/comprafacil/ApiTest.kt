@@ -19,7 +19,11 @@ import br.com.comprafacil.ui.comum.moeda
 import br.com.comprafacil.ui.comum.quantidadeComMedida
 import br.com.comprafacil.ui.comum.situacaoDoOrcamento
 import br.com.comprafacil.ui.nota.ehLinkDeNota
-import br.com.comprafacil.ui.produtos.precosPagos
+import br.com.comprafacil.data.api.Loja
+import br.com.comprafacil.data.api.PrecosDaCidade
+import br.com.comprafacil.ui.comum.linkComoChegar
+import br.com.comprafacil.ui.comum.nomeDaLoja
+import br.com.comprafacil.ui.comum.quandoFoi
 import java.math.BigDecimal
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.jsonArray
@@ -74,12 +78,30 @@ class ApiTest {
     }
 
     @Test
-    fun menorPrecoUsaSoComprasConcluidas() {
-        val listas = JsonApi.decodeFromString<List<Lista>>(recurso("listas.json"))
-        val produtos = JsonApi.decodeFromString<List<Produto>>(recurso("produtos.json")).associateBy { it.id }
-        val precos = precosPagos(listas, produtos)
-        assertTrue(precos.isNotEmpty())
-        precos.forEach { assertTrue(it.menor <= it.media && it.media > BigDecimal.ZERO) }
+    fun leOsPrecosDaCidade() {
+        val precos = JsonApi.decodeFromString<PrecosDaCidade>(recurso("precos.json"))
+        assertEquals(30, precos.dias)
+        assertTrue(precos.produtos.isNotEmpty())
+        val primeiro = precos.produtos.first()
+        val loja = primeiro.lojas.first().loja
+        assertEquals("Assaí Atacadista", nomeDaLoja(loja))
+        assertEquals("assai", loja.icone)
+        assertTrue(primeiro.menorNoPeriodo!!.preco > BigDecimal.ZERO)
+    }
+
+    @Test
+    fun comoChegarEQuandoFoi() {
+        val loja = Loja(1, "SENDAS DISTRIBUIDORA S/A", endereco = "Av. Rodrigo Otavio, 2595, Manaus, AM")
+        assertEquals("Sendas Distribuidora S/A", nomeDaLoja(loja))
+        val link = linkComoChegar(loja)
+        assertTrue(link.startsWith("https://www.google.com/maps/dir/?api=1&destination="))
+        assertTrue(link.endsWith("&travelmode=driving&dir_action=navigate"))
+        assertFalse(link.contains(" "))
+
+        val hoje = java.time.LocalDate.of(2026, 10, 30)
+        assertEquals("hoje", quandoFoi("2026-10-30T15:00:00Z", hoje))
+        assertEquals("ontem", quandoFoi("2026-10-29T15:00:00Z", hoje))
+        assertEquals("há 7 dias", quandoFoi("2026-10-23T18:28:28Z", hoje))
     }
 
     // ---- Envio ----

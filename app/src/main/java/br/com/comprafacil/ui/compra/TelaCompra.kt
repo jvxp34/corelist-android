@@ -66,6 +66,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.comprafacil.data.api.Item
 import br.com.comprafacil.data.api.Lista
+import br.com.comprafacil.data.api.PrecoNaLoja
+import br.com.comprafacil.data.api.PrecosDaLista
+import br.com.comprafacil.ui.comum.BotaoComoChegar
+import br.com.comprafacil.ui.comum.LogoDaLoja
+import br.com.comprafacil.ui.comum.nomeDaLoja
+import br.com.comprafacil.ui.comum.precoComMedida
 import br.com.comprafacil.ui.comum.BotaoPrincipal
 import br.com.comprafacil.ui.comum.CampoPreco
 import br.com.comprafacil.ui.comum.Carregando
@@ -190,6 +196,8 @@ fun TelaCompra(
                     onAdicionar = { adicionando = true },
                     passando = vm.salvando,
                     onPassarParaProxima = { ids -> vm.passarParaProxima(ids, onAbrirLista) },
+                    precos = vm.precosDaLista,
+                    maisBaratoAgora = vm::maisBaratoAgora,
                 )
             }
         }
@@ -284,6 +292,8 @@ private fun ConteudoCompra(
     onAdicionar: () -> Unit,
     passando: Boolean,
     onPassarParaProxima: (List<Int>) -> Unit,
+    precos: PrecosDaLista?,
+    maisBaratoAgora: (Int) -> PrecoNaLoja?,
 ) {
     val faltam = lista.items.filter { !it.comprado }
     val noCarrinho = lista.items.filter { it.comprado }
@@ -295,6 +305,10 @@ private fun ConteudoCompra(
         modifier = Modifier.fillMaxSize(),
     ) {
         item { ResumoOrcamento(lista) }
+
+        if (!lista.concluida && precos != null && precos.melhorLoja.isNotEmpty()) {
+            item { CartaoMelhorLoja(precos) }
+        }
 
         if (semPreco > 0) {
             item {
@@ -343,7 +357,9 @@ private fun ConteudoCompra(
         } else {
             if (faltam.isNotEmpty()) {
                 item { TituloSecao("Falta pegar (${faltam.size})") }
-                items(faltam, key = { it.id }) { LinhaItem(it, nomeDoProduto(it.product), onMarcar, onEditar) }
+                items(faltam, key = { it.id }) {
+                    LinhaItem(it, nomeDoProduto(it.product), onMarcar, onEditar, maisBarato = maisBaratoAgora(it.id))
+                }
             }
             if (noCarrinho.isNotEmpty()) {
                 item { TituloSecao("No carrinho (${noCarrinho.size})") }
@@ -472,6 +488,7 @@ private fun LinhaItem(
     onMarcar: (Item) -> Unit,
     onEditar: (Item) -> Unit,
     mostrarCheck: Boolean = true,
+    maisBarato: PrecoNaLoja? = null,
 ) {
     Cartao(Modifier.fillMaxWidth()) {
         Row(
@@ -505,11 +522,78 @@ private fun LinhaItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = Cores.Secundario,
                 )
+                if (maisBarato != null && !item.comprado) {
+                    Text(
+                        "Mais barato agora: ${nomeDaLoja(maisBarato.loja)} · ${precoComMedida(maisBarato.preco, maisBarato.medida)}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                        color = Cores.MarcaEscura,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Text(
                 item.subtotal?.let { moeda(it) } ?: "—",
                 style = MaterialTheme.typography.titleSmall,
             )
+        }
+    }
+}
+
+/** Onde a lista inteira sai mais barata, pelos preços das notas (até 3 lojas). */
+@Composable
+private fun CartaoMelhorLoja(precos: PrecosDaLista) {
+    val lojas = precos.melhorLoja.take(3)
+    val melhor = lojas.first()
+
+    Cartao(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                "MELHOR LOJA PARA ESTA LISTA",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = Cores.Secundario,
+            )
+            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                LogoDaLoja(melhor.loja)
+                Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                    Text(nomeDaLoja(melhor.loja), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        buildString {
+                            append("${moeda(melhor.total)} · ${melhor.itens} de ${precos.totalItens} itens com preço")
+                            if (melhor.desatualizados > 0) {
+                                append(" · ${melhor.desatualizados} ")
+                                append(if (melhor.desatualizados == 1) "preço pode ter mudado" else "preços podem ter mudado")
+                            }
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Cores.Secundario,
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+                BotaoComoChegar(melhor.loja)
+            }
+            if (lojas.size > 1) {
+                HorizontalDivider(color = Cores.Linha, modifier = Modifier.padding(vertical = 10.dp))
+                lojas.drop(1).forEach { outra ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        LogoDaLoja(outra.loja, tamanho = 28.dp)
+                        Text(
+                            nomeDaLoja(outra.loja),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Cores.Secundario,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                        )
+                        Text(
+                            "${moeda(outra.total)} · ${outra.itens} de ${precos.totalItens}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Cores.Secundario,
+                        )
+                    }
+                }
+            }
         }
     }
 }

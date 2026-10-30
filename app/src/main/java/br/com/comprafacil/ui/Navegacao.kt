@@ -155,7 +155,7 @@ fun Navegacao(app: AppContainer) {
                 )
             }
             composable<RotaProdutos> { TelaProdutos() }
-            composable<RotaMenorPreco> { TelaMenorPreco() }
+            composable<RotaMenorPreco> { TelaMenorPreco(onLerNota = { nav.navigate(RotaLerNota) }) }
             composable<RotaCompra> { e ->
                 val id = e.toRoute<RotaCompra>().id
                 TelaCompra(

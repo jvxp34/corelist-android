@@ -10,6 +10,8 @@ import br.com.comprafacil.data.api.Item
 import br.com.comprafacil.data.api.Lista
 import br.com.comprafacil.data.api.NovoItem
 import br.com.comprafacil.data.api.NovoProduto
+import br.com.comprafacil.data.api.PrecoNaLoja
+import br.com.comprafacil.data.api.PrecosDaLista
 import br.com.comprafacil.data.api.Produto
 import br.com.comprafacil.data.api.ProdutoBusca
 import br.com.comprafacil.data.api.RepetirLista
@@ -67,12 +69,32 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
                 is Resultado.Ok -> {
                     lista = r.valor.firstOrNull { it.id == listaId }
                     erro = if (lista == null) "Esta lista não existe mais." else null
+                    carregarPrecos()
                 }
                 is Resultado.Falha -> erro = r.mensagem
             }
             carregando = false
         }
     }
+
+    /** Preços da cidade para a lista em andamento (melhor loja e mais barato por item). */
+    var precosDaLista by mutableStateOf<PrecosDaLista?>(null)
+        private set
+
+    private fun carregarPrecos() {
+        val l = lista ?: return
+        if (l.concluida || l.items.isEmpty()) {
+            precosDaLista = null
+            return
+        }
+        viewModelScope.launch {
+            // Sem preços não é erro: a lista funciona do mesmo jeito.
+            (chamar { app.api.precosDaLista(listaId) } as? Resultado.Ok)?.let { precosDaLista = it.valor }
+        }
+    }
+
+    fun maisBaratoAgora(itemId: Int): PrecoNaLoja? =
+        precosDaLista?.itens?.firstOrNull { it.item == itemId }?.maisBaratoAgora
 
     private fun trocarItem(novo: Item) {
         lista = lista?.let { l -> l.copy(items = l.items.map { if (it.id == novo.id) novo else it }) }
@@ -108,6 +130,7 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
     fun removerItem(item: Item, onOk: () -> Unit) {
         executar({ app.api.removerItem(listaId, item.id).exigirSucesso() }) {
             lista = lista?.let { l -> l.copy(items = l.items.filter { it.id != item.id }) }
+            carregarPrecos()
             onOk()
             _mensagens.send("${nomeDoProduto(item.product)} saiu da lista.")
         }
@@ -119,6 +142,7 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
         }) { novo ->
             produtos = produtos + (produto.id to produto)
             lista = lista?.let { it.copy(items = it.items + novo) }
+            carregarPrecos()
             onOk()
         }
     }
