@@ -291,7 +291,7 @@ fun CampoQuantidade(
             value = texto,
             onValueChange = { novo ->
                 val filtrado = novo.filter { it.isDigit() || it == ',' || it == '.' }
-                    .let { if (porKg) it else it.filter(Char::isDigit) }
+                    .let { if (porKg) limitarCasas(it, 3) else it.filter(Char::isDigit) }
                 texto = filtrado
                 lerDecimal(filtrado)?.takeIf { it.signum() > 0 }?.let(onChange)
             },

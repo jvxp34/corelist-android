@@ -141,7 +141,11 @@ private fun CampoEmail(valor: String, onChange: (String) -> Unit) {
         onValueChange = onChange,
         label = { Text("E-mail") },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
+            autoCorrectEnabled = false,
+        ),
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     )

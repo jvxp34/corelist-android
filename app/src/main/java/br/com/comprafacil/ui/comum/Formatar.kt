@@ -40,6 +40,13 @@ fun quantidadeParaCampo(valor: BigDecimal): String =
 fun quantidadeComMedida(quantidade: BigDecimal, porKg: Boolean): String =
     numero(quantidade) + if (porKg) " kg" else " un"
 
+/** Corta o que passar de [casas] decimais: "1,23456" -> "1,234". O backend aceita até 3 no peso. */
+fun limitarCasas(texto: String, casas: Int): String {
+    val separador = texto.indexOfFirst { it == ',' || it == '.' }
+    if (separador < 0) return texto
+    return texto.substring(0, separador + 1) + texto.substring(separador + 1).filter(Char::isDigit).take(casas)
+}
+
 /** Lê o que o usuário digitou ("24,90", "R$ 1.234,50", "3.5"). */
 fun lerDecimal(texto: String): BigDecimal? {
     var limpo = texto.replace("R$", "").replace(" ", "").replace(' '.toString(), "").trim()

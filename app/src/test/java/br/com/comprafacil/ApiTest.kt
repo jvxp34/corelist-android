@@ -14,7 +14,9 @@ import br.com.comprafacil.data.api.Resultado
 import br.com.comprafacil.data.api.chamar
 import br.com.comprafacil.ui.comum.NivelOrcamento
 import br.com.comprafacil.ui.comum.lerDecimal
+import br.com.comprafacil.ui.comum.limitarCasas
 import br.com.comprafacil.ui.comum.moeda
+import br.com.comprafacil.ui.comum.quantidadeComMedida
 import br.com.comprafacil.ui.comum.situacaoDoOrcamento
 import br.com.comprafacil.ui.nota.ehLinkDeNota
 import br.com.comprafacil.ui.produtos.precosPagos
@@ -126,6 +128,15 @@ class ApiTest {
         assertNull(lerDecimal(""))
         assertNull(lerDecimal("abc"))
         assertEquals("R$ 24,90", moeda(BigDecimal("24.9")))
+    }
+
+    @Test
+    fun pesoComAte3Casas() {
+        assertEquals("1,235", limitarCasas("1,23567", 3))
+        assertEquals("1.2", limitarCasas("1.2", 3))
+        assertEquals("12", limitarCasas("12", 3))
+        assertEquals("1,234", limitarCasas("1,2,34", 3))
+        assertEquals("1,235 kg", quantidadeComMedida(BigDecimal("1.235"), porKg = true))
     }
 
     @Test

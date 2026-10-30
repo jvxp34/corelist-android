@@ -346,14 +346,21 @@ private fun ResumoOrcamento(lista: Lista) {
                 Spacer(Modifier.height(8.dp))
             }
 
-            DestaqueSaldo(situacao)
+            if (lista.concluida && situacao.nivel == NivelOrcamento.SEM) {
+                // Compra concluída sem orçamento: o que importa é quanto foi gasto.
+                Text("Total gasto", style = MaterialTheme.typography.labelMedium, color = Cores.Secundario)
+                Text(moeda(total), style = MaterialTheme.typography.headlineMedium)
+                return@Column
+            }
+
+            DestaqueSaldo(situacao, concluida = lista.concluida)
 
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = Cores.Linha)
             Spacer(Modifier.height(12.dp))
 
             Row {
-                Valor("Total da lista", moeda(total), Modifier.weight(1f))
+                Valor(if (lista.concluida) "Total gasto" else "Total da lista", moeda(total), Modifier.weight(1f))
                 if (situacao.nivel != NivelOrcamento.SEM) {
                     Valor("Orçamento", moeda(situacao.orcamento), Modifier.weight(1f))
                 }
@@ -375,7 +382,7 @@ private fun ResumoOrcamento(lista: Lista) {
 }
 
 @Composable
-private fun DestaqueSaldo(situacao: SituacaoOrcamento) {
+private fun DestaqueSaldo(situacao: SituacaoOrcamento, concluida: Boolean = false) {
     when (situacao.nivel) {
         NivelOrcamento.SEM -> {
             Text("Sem orçamento", style = MaterialTheme.typography.titleMedium)
@@ -387,7 +394,11 @@ private fun DestaqueSaldo(situacao: SituacaoOrcamento) {
         }
         else -> {
             Text(
-                if (situacao.nivel == NivelOrcamento.ESTOUROU) "Passou do orçamento em" else "Ainda resta",
+                when {
+                    situacao.nivel == NivelOrcamento.ESTOUROU -> "Passou do orçamento em"
+                    concluida -> "Sobrou do orçamento"
+                    else -> "Ainda resta"
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = situacao.corTexto,
             )

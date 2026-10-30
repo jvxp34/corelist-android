@@ -290,7 +290,12 @@ private fun TelaCompraConcluida(lista: Lista, onVerCompra: () -> Unit, onInicio:
         }
         Text("Compra concluída!", style = MaterialTheme.typography.headlineSmall)
         Text(
-            listOfNotNull(lista.name, data(lista.concluidaEm).ifBlank { null }).joinToString(" · "),
+            // O nome padrão já traz o dia ("Loja 23/10"); aí não repete a data.
+            listOfNotNull(
+                lista.name,
+                data(lista.concluidaEm).ifBlank { null }
+                    ?.takeUnless { lista.name.contains(br.com.comprafacil.ui.comum.diaMes(lista.concluidaEm)) },
+            ).joinToString(" · "),
             color = Cores.Secundario,
             textAlign = TextAlign.Center,
         )
