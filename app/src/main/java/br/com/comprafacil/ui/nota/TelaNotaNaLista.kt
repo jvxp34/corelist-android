@@ -81,7 +81,15 @@ fun TelaNotaNaLista(
 ) {
     val vm = appViewModel(key = "nota-lista-$listaId-$link") { NotaNaListaViewModel(it, listaId, link) }
 
-    LaunchedEffect(vm.concluida) { vm.concluida?.let { onConcluida(it.id) } }
+    val concluida = vm.concluida
+    if (concluida != null) {
+        TelaSugerirProximaLista(
+            compraId = concluida.id,
+            onCriada = onAbrirLista,
+            onAgoraNao = { onConcluida(concluida.id) },
+        )
+        return
+    }
 
     Scaffold(
         containerColor = Cores.Fundo,

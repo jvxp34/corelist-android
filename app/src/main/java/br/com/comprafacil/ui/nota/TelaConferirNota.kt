@@ -69,7 +69,12 @@ fun TelaConferirNota(
     val importada = vm.importada
 
     if (importada != null) {
-        TelaCompraConcluida(importada, onVerCompra = { onAbrirLista(importada.id) }, onInicio = onInicio)
+        // Compra salva: sugere a próxima lista com o que foi comprado.
+        TelaSugerirProximaLista(
+            compraId = importada.id,
+            onCriada = onAbrirLista,
+            onAgoraNao = { onAbrirLista(importada.id) },
+        )
         return
     }
 
@@ -270,50 +275,5 @@ internal fun JaImportada(onVer: () -> Unit, onLerOutra: () -> Unit) {
         )
         BotaoPrincipal("Ver a compra", onVer, Modifier.fillMaxWidth())
         BotaoSecundario("Ler outra nota", onLerOutra, Modifier.fillMaxWidth(), icone = Icons.Outlined.QrCodeScanner)
-    }
-}
-
-@Composable
-private fun TelaCompraConcluida(lista: Lista, onVerCompra: () -> Unit, onInicio: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Cores.Fundo)
-            .padding(24.dp)
-            .navigationBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Spacer(Modifier.height(56.dp))
-        Box(Modifier.size(96.dp).background(Cores.OkChip, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.Check, null, tint = Cores.OkTexto, modifier = Modifier.size(48.dp))
-        }
-        Text("Compra concluída!", style = MaterialTheme.typography.headlineSmall)
-        Text(
-            // O nome padrão já traz o dia ("Loja 23/10"); aí não repete a data.
-            listOfNotNull(
-                lista.name,
-                data(lista.concluidaEm).ifBlank { null }
-                    ?.takeUnless { lista.name.contains(br.com.comprafacil.ui.comum.diaMes(lista.concluidaEm)) },
-            ).joinToString(" · "),
-            color = Cores.Secundario,
-            textAlign = TextAlign.Center,
-        )
-        Cartao(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row {
-                    Text("Gasto", color = Cores.Secundario, modifier = Modifier.weight(1f))
-                    Text(moeda(lista.total), style = MaterialTheme.typography.titleMedium)
-                }
-                Text(
-                    "${lista.items.size} preços reais salvos. Na próxima lista, o app já sabe quanto você costuma pagar.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Cores.Secundario,
-                )
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        BotaoPrincipal("Ver a compra", onVerCompra, Modifier.fillMaxWidth())
-        BotaoSecundario("Voltar ao início", onInicio, Modifier.fillMaxWidth())
     }
 }
