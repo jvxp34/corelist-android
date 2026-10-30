@@ -63,6 +63,10 @@ interface CompraFacilApi {
     @POST("products/")
     suspend fun criarProduto(@Body corpo: NovoProduto): Produto
 
+    /** Guarda o código e puxa foto, marca e embalagem do Open Food Facts. 409 = código em conflito. */
+    @POST("products/{id}/codigo-de-barras/")
+    suspend fun completarPeloCodigo(@Path("id") produtoId: Int, @Body corpo: CodigoDeBarras): ProdutoCompletado
+
     @GET("products/lookup/")
     suspend fun buscarPorCodigo(@Query("barcode") codigo: String): ConsultaCodigo
 

@@ -32,6 +32,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -173,6 +174,9 @@ fun TelaMenorPreco(onLerNota: () -> Unit) {
                         }
                     }
                     items(resultados, key = { it.produto.id }) { CartaoDoProduto(it) }
+                    if (resultados.any { !it.produto.imagem.isNullOrBlank() }) {
+                        item { CreditoOpenFoodFacts(Modifier.padding(top = 4.dp)) }
+                    }
                 }
             }
         }
@@ -182,7 +186,8 @@ fun TelaMenorPreco(onLerNota: () -> Unit) {
 @Composable
 private fun CartaoDoProduto(resumo: ResumoPreco) {
     var aberto by rememberSaveable(resumo.produto.id) { mutableStateOf(false) }
-    val produto = resumo.produto
+    // Atualiza na hora quando a pessoa adiciona a foto pelo código de barras.
+    var produto by remember(resumo.produto) { mutableStateOf(resumo.produto) }
     val agora = resumo.maisBaratoAgora
     val menor = resumo.menorNoPeriodo
     val detalhes = listOfNotNull(produto.brand, produto.embalagem).filter { it.isNotBlank() }.joinToString(" · ")
@@ -195,6 +200,15 @@ private fun CartaoDoProduto(resumo: ResumoPreco) {
                     Text(produto.name, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (detalhes.isNotBlank()) {
                         Text(detalhes, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+                    }
+                    if (produto.imagem.isNullOrBlank()) {
+                        AdicionarFoto(produto.id, produto.name) { novo ->
+                            produto = produto.copy(
+                                brand = novo.brand,
+                                embalagem = (novo.embalagem?.takeIf { it.isNotBlank() } ?: novo.unit).orEmpty().trim(),
+                                imagem = novo.imagem,
+                            )
+                        }
                     }
                 }
             }

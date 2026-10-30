@@ -163,6 +163,13 @@ data class SugestaoProduto(
 )
 
 @Serializable
+data class CodigoDeBarras(val barcode: String)
+
+/** Resposta de products/<id>/codigo-de-barras/: só os campos vazios são preenchidos. */
+@Serializable
+data class ProdutoCompletado(val produto: Produto, val encontrado: Boolean = false)
+
+@Serializable
 data class ConsultaCodigo(
     val origem: String,
     val produto: Produto? = null,

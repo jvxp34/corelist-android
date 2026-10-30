@@ -128,6 +128,11 @@ class ProdutosViewModel(private val app: AppContainer) : ViewModel() {
         }
     }
 
+    /** Produto completado pelo código de barras (foto, marca, embalagem). */
+    fun trocarProduto(novo: Produto) {
+        produtos = produtos?.map { if (it.id == novo.id) novo else it }
+    }
+
     fun limparForm() {
         codigo = ""; nome = ""; marca = ""; embalagem = ""; imagem = ""
         origem = "manual"; avisoForm = null; erroForm = null
@@ -263,17 +268,26 @@ fun TelaProdutos() {
                     }
                     items(mostrados, key = { it.id }) { p ->
                         Cartao(Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                                Text(p.name, style = MaterialTheme.typography.bodyLarge)
-                                val extra = listOfNotNull(
-                                    p.detalhes.takeIf { it.isNotBlank() },
-                                    p.barcode?.takeIf { it.isNotBlank() },
-                                ).joinToString(" · ")
-                                if (extra.isNotBlank()) {
-                                    Text(extra, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+                            Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.Top) {
+                                FotoDoProduto(p.imagem, p.name)
+                                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                                    Text(p.name, style = MaterialTheme.typography.bodyLarge)
+                                    val extra = listOfNotNull(
+                                        p.detalhes.takeIf { it.isNotBlank() },
+                                        p.barcode?.takeIf { it.isNotBlank() },
+                                    ).joinToString(" · ")
+                                    if (extra.isNotBlank()) {
+                                        Text(extra, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+                                    }
+                                    if (p.imagem.isNullOrBlank()) {
+                                        AdicionarFoto(p.id, p.name, onCompletar = vm::trocarProduto)
+                                    }
                                 }
                             }
                         }
+                    }
+                    if (mostrados.any { !it.imagem.isNullOrBlank() || it.origem == "openfoodfacts" }) {
+                        item { CreditoOpenFoodFacts(Modifier.padding(top = 8.dp)) }
                     }
                 }
             }
@@ -379,7 +393,12 @@ private fun Campo(valor: String, onChange: (String) -> Unit, rotulo: String) {
 }
 
 @Composable
-private fun DialogoLerCodigo(onFechar: () -> Unit, onCodigo: (String) -> Unit) {
+internal fun DialogoLerCodigo(
+    onFechar: () -> Unit,
+    onCodigo: (String) -> Unit,
+    titulo: String = "Código de barras",
+    dica: String = "Aponte para o código de barras da embalagem.",
+) {
     var lido by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { lido = false }
     Dialog(onDismissRequest = onFechar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -389,7 +408,7 @@ private fun DialogoLerCodigo(onFechar: () -> Unit, onCodigo: (String) -> Unit) {
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Código de barras",
+                    titulo,
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                     modifier = Modifier.weight(1f),
@@ -413,7 +432,7 @@ private fun DialogoLerCodigo(onFechar: () -> Unit, onCodigo: (String) -> Unit) {
                 )
             }
             Text(
-                "Aponte para o código de barras da embalagem.",
+                dica,
                 color = Color(0xFFC7C9D3),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 16.dp),
