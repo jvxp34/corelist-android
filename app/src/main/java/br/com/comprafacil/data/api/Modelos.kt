@@ -123,6 +123,25 @@ data class Produto(
             .joinToString(" · ")
 }
 
+/** Resultado de lists/produtos/?q=: produto com o último preço que a pessoa pagou. */
+@Serializable
+data class ProdutoBusca(
+    val id: Int,
+    val name: String,
+    val brand: String? = null,
+    val embalagem: String? = null,
+    @SerialName("ultimo_preco") val ultimoPreco: Decimal? = null,
+    @SerialName("ultima_medida") val ultimaMedida: String? = null,
+    val vezes: Int = 0,
+) {
+    val detalhes: String
+        get() = listOf(brand?.trim(), embalagem?.trim())
+            .filter { !it.isNullOrBlank() }
+            .joinToString(" · ")
+
+    fun comoProduto() = Produto(id = id, name = name, brand = brand, embalagem = embalagem)
+}
+
 @Serializable
 data class NovoProduto(
     val name: String,

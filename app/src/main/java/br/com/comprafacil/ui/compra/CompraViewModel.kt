@@ -11,11 +11,14 @@ import br.com.comprafacil.data.api.Lista
 import br.com.comprafacil.data.api.NovoItem
 import br.com.comprafacil.data.api.NovoProduto
 import br.com.comprafacil.data.api.Produto
+import br.com.comprafacil.data.api.ProdutoBusca
 import br.com.comprafacil.data.api.Resultado
 import br.com.comprafacil.data.api.chamar
 import br.com.comprafacil.data.api.exigirSucesso
 import java.math.BigDecimal
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -116,6 +119,54 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
             produtos = produtos + (produto.id to produto)
             lista = lista?.let { it.copy(items = it.items + novo) }
             onOk()
+        }
+    }
+
+    // ---- Busca de produto ao adicionar ----
+
+    /** Os mais comprados (busca vazia), para atalhos de um toque. */
+    var atalhos by mutableStateOf<List<ProdutoBusca>>(emptyList())
+        private set
+    var resultados by mutableStateOf<List<ProdutoBusca>>(emptyList())
+        private set
+    var buscando by mutableStateOf(false)
+        private set
+    /** Termo que gerou [resultados], para não mostrar resultado velho. */
+    var termoBuscado by mutableStateOf("")
+        private set
+    private var buscaJob: Job? = null
+
+    fun abrirBusca() {
+        resultados = emptyList()
+        termoBuscado = ""
+        viewModelScope.launch {
+            when (val r = chamar { app.api.buscarProdutos() }) {
+                is Resultado.Ok -> atalhos = r.valor
+                is Resultado.Falha -> Unit // sem atalhos; a busca ainda funciona
+            }
+        }
+    }
+
+    fun buscar(texto: String) {
+        buscaJob?.cancel()
+        val termo = texto.trim()
+        if (termo.isEmpty()) {
+            resultados = emptyList()
+            termoBuscado = ""
+            buscando = false
+            return
+        }
+        buscaJob = viewModelScope.launch {
+            buscando = true
+            delay(250) // espera a pessoa parar de digitar
+            when (val r = chamar { app.api.buscarProdutos(termo) }) {
+                is Resultado.Ok -> {
+                    resultados = r.valor
+                    termoBuscado = termo
+                }
+                is Resultado.Falha -> _mensagens.send(r.mensagem)
+            }
+            buscando = false
         }
     }
 

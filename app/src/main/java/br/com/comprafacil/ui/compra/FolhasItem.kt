@@ -1,11 +1,15 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 
 package br.com.comprafacil.ui.compra
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
@@ -21,6 +25,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -49,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import br.com.comprafacil.data.api.MEDIDA_KG
 import br.com.comprafacil.data.api.MEDIDA_UNIDADE
 import br.com.comprafacil.data.api.Produto
+import br.com.comprafacil.data.api.ProdutoBusca
 import br.com.comprafacil.ui.comum.BotaoPrincipal
 import br.com.comprafacil.ui.comum.CampoPreco
 import br.com.comprafacil.ui.comum.CampoQuantidade
@@ -158,17 +165,25 @@ fun FolhaItem(
     }
 }
 
-/** Escolher um produto do catálogo (ou cadastrar um novo) e depois o item. */
+/**
+ * Adicionar à lista: busca no servidor (lists/produtos/?q=), atalhos com os
+ * mais comprados e "Cadastrar" quando não acha. O último preço e a medida
+ * que a pessoa usou já vêm preenchidos.
+ */
 @Composable
 fun FolhaAdicionar(
-    produtos: List<Produto>,
+    atalhos: List<ProdutoBusca>,
+    resultados: List<ProdutoBusca>,
+    termoBuscado: String,
+    buscando: Boolean,
     salvando: Boolean,
+    onBuscar: (String) -> Unit,
     onFechar: () -> Unit,
     onCadastrar: (String, (Produto) -> Unit) -> Unit,
     onAdicionar: (Produto, DadosItem) -> Unit,
 ) {
     var busca by rememberSaveable { mutableStateOf("") }
-    var escolhido by remember { mutableStateOf<Produto?>(null) }
+    var escolhido by remember { mutableStateOf<ProdutoBusca?>(null) }
 
     ModalBottomSheet(
         onDismissRequest = onFechar,
@@ -197,86 +212,119 @@ fun FolhaAdicionar(
                     }
                 }
                 FormularioItem(
-                    inicial = DadosItem(BigDecimal.ONE, MEDIDA_UNIDADE, produto.price?.takeIf { it.signum() > 0 }),
+                    inicial = DadosItem(
+                        BigDecimal.ONE,
+                        if (produto.ultimaMedida == MEDIDA_KG) MEDIDA_KG else MEDIDA_UNIDADE,
+                        produto.ultimoPreco?.takeIf { it.signum() > 0 },
+                    ),
                     textoBotao = "Adicionar à lista",
                     salvando = salvando,
-                    onSalvar = { onAdicionar(produto, it) },
+                    onSalvar = { onAdicionar(produto.comoProduto(), it) },
                     onRemover = null,
                 )
             }
         } else {
-            val termo = normalizar(busca)
-            val achados = remember(produtos, termo) {
-                produtos
-                    .filter { termo.isEmpty() || normalizar(it.name).contains(termo) }
-                    .sortedBy { normalizar(it.name) }
-                    .take(80)
-            }
-            val existeIgual = produtos.any { normalizar(it.name) == termo }
+            val termo = busca.trim()
+            // Enquanto o servidor não responde, não mostra o resultado de outro termo.
+            val achados = if (termo.isNotEmpty() && termoBuscado == termo) resultados else emptyList()
+            val existeIgual = achados.any { normalizar(it.name) == normalizar(termo) }
+            val maisComprados = atalhos.filter { it.vezes > 0 }.take(8)
 
             Column(Modifier.imePadding().padding(horizontal = 20.dp)) {
                 Text("Adicionar produto", style = MaterialTheme.typography.titleLarge)
                 OutlinedTextField(
                     value = busca,
-                    onValueChange = { busca = it },
-                    placeholder = { Text("Buscar ou digitar um produto novo") },
+                    onValueChange = {
+                        busca = it
+                        onBuscar(it)
+                    },
+                    placeholder = { Text("Buscar produto") },
                     leadingIcon = { Icon(Icons.Outlined.Search, null) },
+                    trailingIcon = {
+                        if (buscando) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Cores.Marca)
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                 )
                 LazyColumn(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
-                    if (busca.isNotBlank() && !existeIgual) {
-                        item {
-                            Row(
+                    if (termo.isEmpty()) {
+                        if (maisComprados.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Você costuma comprar",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Cores.Secundario,
+                                    modifier = Modifier.padding(bottom = 8.dp),
+                                )
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    maisComprados.forEach { p ->
+                                        AssistChip(onClick = { escolhido = p }, label = { Text(p.name) })
+                                    }
+                                }
+                            }
+                        } else {
+                            item {
+                                Text(
+                                    "Digite o nome do produto para buscar ou cadastrar.",
+                                    color = Cores.Secundario,
+                                    modifier = Modifier.padding(vertical = 16.dp),
+                                )
+                            }
+                        }
+                    } else {
+                        items(achados, key = { it.id }) { p ->
+                            Column(
                                 Modifier
                                     .fillMaxWidth()
-                                    .clickable(enabled = !salvando) { onCadastrar(busca) { escolhido = it } }
-                                    .padding(vertical = 14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                                    .clickable { escolhido = p }
+                                    .padding(vertical = 12.dp),
                             ) {
-                                Icon(Icons.Default.Add, null, tint = Cores.Marca)
-                                Text(
-                                    "Cadastrar “${busca.trim()}”",
-                                    color = Cores.Marca,
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    modifier = Modifier.padding(start = 12.dp),
-                                )
+                                Text(p.name, style = MaterialTheme.typography.bodyLarge)
+                                val extra = listOfNotNull(
+                                    p.detalhes.takeIf { it.isNotBlank() },
+                                    p.ultimoPreco?.takeIf { it.signum() > 0 }?.let {
+                                        "último ${moeda(it)}${if (p.ultimaMedida == MEDIDA_KG) "/kg" else ""}"
+                                    },
+                                ).joinToString(" · ")
+                                if (extra.isNotBlank()) {
+                                    Text(extra, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+                                }
                             }
                             HorizontalDivider(color = Cores.Linha)
                         }
-                    }
-                    if (achados.isEmpty() && busca.isBlank()) {
-                        item {
-                            Text(
-                                "Nenhum produto no catálogo ainda. Digite o nome para cadastrar.",
-                                color = Cores.Secundario,
-                                modifier = Modifier.padding(vertical = 16.dp),
-                            )
-                        }
-                    }
-                    items(achados, key = { it.id }) { p ->
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { escolhido = p }
-                                .padding(vertical = 12.dp),
-                        ) {
-                            Text(p.name, style = MaterialTheme.typography.bodyLarge)
-                            val extra = listOfNotNull(
-                                p.detalhes.takeIf { it.isNotBlank() },
-                                p.price?.takeIf { it.signum() > 0 }?.let { "ref. ${moeda(it)}" },
-                            ).joinToString(" · ")
-                            if (extra.isNotBlank()) {
-                                Text(extra, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+                        if (!existeIgual && !buscando) {
+                            item {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = !salvando) {
+                                            onCadastrar(termo) { novo ->
+                                                escolhido = ProdutoBusca(novo.id, novo.name, novo.brand, novo.embalagem)
+                                            }
+                                        }
+                                        .padding(vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(Icons.Default.Add, null, tint = Cores.Marca)
+                                    Text(
+                                        "Cadastrar “$termo”",
+                                        color = Cores.Marca,
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                        modifier = Modifier.padding(start = 12.dp),
+                                    )
+                                }
                             }
                         }
-                        HorizontalDivider(color = Cores.Linha)
                     }
                 }
-                androidx.compose.foundation.layout.Spacer(Modifier.navigationBarsPadding().padding(bottom = 12.dp))
+                Spacer(Modifier.navigationBarsPadding().padding(bottom = 12.dp))
             }
         }
     }
 }
+

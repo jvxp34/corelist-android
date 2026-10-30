@@ -198,8 +198,13 @@ fun TelaCompra(listaId: Int, onVoltar: () -> Unit) {
     }
 
     if (adicionando) {
+        LaunchedEffect(Unit) { vm.abrirBusca() }
         FolhaAdicionar(
-            produtos = vm.produtos.values.toList(),
+            atalhos = vm.atalhos,
+            resultados = vm.resultados,
+            termoBuscado = vm.termoBuscado,
+            buscando = vm.buscando,
+            onBuscar = vm::buscar,
             salvando = vm.salvando,
             onFechar = { adicionando = false },
             onCadastrar = vm::cadastrarProduto,
