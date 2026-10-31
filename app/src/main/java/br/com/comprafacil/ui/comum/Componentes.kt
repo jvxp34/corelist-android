@@ -272,7 +272,8 @@ fun CampoQuantidade(
     modifier: Modifier = Modifier,
 ) {
     val passo = if (porKg) BigDecimal("0.1") else BigDecimal.ONE
-    val minimo = passo
+    // Em kg aceita pesos menores que o passo (ex.: 0,045 kg), mas nunca zero.
+    val minimo = if (porKg) BigDecimal("0.001") else BigDecimal.ONE
     var texto by remember { mutableStateOf(quantidadeParaCampo(valor)) }
 
     // Mantém o texto em dia quando o valor muda por fora (botões, troca de medida).
@@ -282,7 +283,7 @@ fun CampoQuantidade(
 
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         FilledTonalIconButton(
-            onClick = { onChange((valor - passo).max(minimo)) },
+            onClick = { onChange((valor - passo).max(minimo).stripTrailingZeros()) },
             enabled = valor > minimo,
             modifier = Modifier.size(48.dp),
         ) { Icon(Icons.Default.Remove, contentDescription = "Diminuir") }
@@ -291,7 +292,7 @@ fun CampoQuantidade(
             value = texto,
             onValueChange = { novo ->
                 val filtrado = novo.filter { it.isDigit() || it == ',' || it == '.' }
-                    .let { if (porKg) it else it.filter(Char::isDigit) }
+                    .let { if (porKg) limitarCasas(it, CASAS_QUANTIDADE) else it.filter(Char::isDigit) }
                 texto = filtrado
                 lerDecimal(filtrado)?.takeIf { it.signum() > 0 }?.let(onChange)
             },
@@ -306,7 +307,7 @@ fun CampoQuantidade(
         )
 
         FilledTonalIconButton(
-            onClick = { onChange(valor + passo) },
+            onClick = { onChange((valor + passo).stripTrailingZeros()) },
             modifier = Modifier.size(48.dp),
         ) { Icon(Icons.Default.Add, contentDescription = "Aumentar") }
     }

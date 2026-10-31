@@ -53,6 +53,7 @@ import br.com.comprafacil.ui.comum.Cartao
 import br.com.comprafacil.ui.comum.appViewModel
 import br.com.comprafacil.ui.comum.data
 import br.com.comprafacil.ui.comum.moeda
+import br.com.comprafacil.ui.comum.precoComMedida
 import br.com.comprafacil.ui.comum.nomeProprio
 import br.com.comprafacil.ui.comum.quantidadeComMedida
 import br.com.comprafacil.ui.theme.Cores
@@ -175,7 +176,7 @@ fun TelaConferirNota(
                                 val porKg = o.medida == MEDIDA_KG
                                 Row(Modifier.padding(top = 6.dp, end = 12.dp)) {
                                     Text(
-                                        "${quantidadeComMedida(o.quantidade, porKg)} × ${moeda(o.preco)}${if (porKg) "/kg" else ""}",
+                                        "${quantidadeComMedida(o.quantidade, porKg)} × ${precoComMedida(o.preco, porKg)}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Cores.Secundario,
                                         modifier = Modifier.weight(1f),

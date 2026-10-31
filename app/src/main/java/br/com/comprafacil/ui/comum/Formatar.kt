@@ -36,7 +36,23 @@ fun precoParaCampo(valor: BigDecimal?): String =
 fun quantidadeParaCampo(valor: BigDecimal): String =
     synchronized(formatoCampoQtd) { formatoCampoQtd.format(valor) }
 
-/** "2 un" ou "1,25 kg". */
+/** O backend aceita a quantidade com até 3 casas (ex.: 1,235 kg da balança). */
+const val CASAS_QUANTIDADE = 3
+
+/** Corta o que passar de [casas] depois da vírgula (ou do ponto) enquanto a pessoa digita. */
+fun limitarCasas(texto: String, casas: Int): String {
+    val separador = texto.indexOfFirst { it == ',' || it == '.' }
+    if (separador < 0) return texto
+    val inteira = texto.substring(0, separador + 1)
+    val decimais = texto.substring(separador + 1).filter(Char::isDigit).take(casas)
+    return inteira + decimais
+}
+
+/** "R$ 6,99/kg" ou "R$ 6,99". */
+fun precoComMedida(preco: BigDecimal, porKg: Boolean): String =
+    moeda(preco) + if (porKg) "/kg" else ""
+
+/** "2 un" ou "1,235 kg" (até 3 casas). */
 fun quantidadeComMedida(quantidade: BigDecimal, porKg: Boolean): String =
     numero(quantidade) + if (porKg) " kg" else " un"
 
