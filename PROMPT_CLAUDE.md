@@ -65,11 +65,11 @@ num celular antes de passar para a próxima.
 
    Tire prints (`adb exec-out screencap -p > tela.png`) para conferir o visual.
 
-2. **Quantidade com 3 casas.** O backend aceita `quantity` com até 3 casas
+2. **[feito em 31/10, falta conferir no aparelho] Quantidade com 3 casas.** O backend aceita `quantity` com até 3 casas
    decimais (ex.: 1,235 kg da balança). Mostre o peso com até 3 casas e o preço do
    kg como "R$ 6,99/kg".
 
-3. **Busca de produto ao adicionar na lista.** No lugar de escolher numa lista
+3. **[feito em 31/10, falta conferir no aparelho] Busca de produto ao adicionar na lista.** No lugar de escolher numa lista
    longa, use um campo de busca:
    - **Buscar:** `GET lists/produtos/?q=arr` devolve os produtos ordenados pelo
      começo das palavras (sem acento, acha também os nomes abreviados da nota),

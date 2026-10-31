@@ -3,6 +3,14 @@
 package br.com.comprafacil.ui.compra
 
 import androidx.compose.foundation.clickable
+import br.com.comprafacil.ui.comum.precoComMedida
+import br.com.comprafacil.data.api.ProdutoBusca
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -158,25 +166,43 @@ fun FolhaItem(
     }
 }
 
-/** Escolher um produto do catálogo (ou cadastrar um novo) e depois o item. */
+/** Produto escolhido, com o preço e a medida que preenchem o formulário. */
+private data class Escolha(val produto: Produto, val preco: BigDecimal?, val medida: String)
+
+private fun ProdutoBusca.paraEscolha() = Escolha(
+    paraProduto(),
+    ultimoPreco?.takeIf { it.signum() > 0 },
+    if (ultimaMedida == MEDIDA_KG) MEDIDA_KG else MEDIDA_UNIDADE,
+)
+
+/**
+ * Buscar um produto (no servidor) ou cadastrar um novo, e depois o item.
+ * Sem busca, mostra os produtos mais comprados como atalhos de um toque.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FolhaAdicionar(
-    produtos: List<Produto>,
+    resultados: List<ProdutoBusca>,
+    buscando: Boolean,
     salvando: Boolean,
+    onBuscar: (String) -> Unit,
     onFechar: () -> Unit,
     onCadastrar: (String, (Produto) -> Unit) -> Unit,
     onAdicionar: (Produto, DadosItem) -> Unit,
 ) {
     var busca by rememberSaveable { mutableStateOf("") }
-    var escolhido by remember { mutableStateOf<Produto?>(null) }
+    var escolhido by remember { mutableStateOf<Escolha?>(null) }
+
+    LaunchedEffect(busca) { onBuscar(busca) }
 
     ModalBottomSheet(
         onDismissRequest = onFechar,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = androidx.compose.ui.graphics.Color.White,
     ) {
-        val produto = escolhido
-        if (produto != null) {
+        val escolha = escolhido
+        if (escolha != null) {
+            val produto = escolha.produto
             Column(
                 Modifier
                     .verticalScroll(rememberScrollState())
@@ -197,7 +223,7 @@ fun FolhaAdicionar(
                     }
                 }
                 FormularioItem(
-                    inicial = DadosItem(BigDecimal.ONE, MEDIDA_UNIDADE, produto.price?.takeIf { it.signum() > 0 }),
+                    inicial = DadosItem(BigDecimal.ONE, escolha.medida, escolha.preco),
                     textoBotao = "Adicionar à lista",
                     salvando = salvando,
                     onSalvar = { onAdicionar(produto, it) },
@@ -206,13 +232,8 @@ fun FolhaAdicionar(
             }
         } else {
             val termo = normalizar(busca)
-            val achados = remember(produtos, termo) {
-                produtos
-                    .filter { termo.isEmpty() || normalizar(it.name).contains(termo) }
-                    .sortedBy { normalizar(it.name) }
-                    .take(80)
-            }
-            val existeIgual = produtos.any { normalizar(it.name) == termo }
+            val semBusca = termo.isEmpty()
+            val existeIgual = resultados.any { normalizar(it.name) == termo }
 
             Column(Modifier.imePadding().padding(horizontal = 20.dp)) {
                 Text("Adicionar produto", style = MaterialTheme.typography.titleLarge)
@@ -221,58 +242,87 @@ fun FolhaAdicionar(
                     onValueChange = { busca = it },
                     placeholder = { Text("Buscar ou digitar um produto novo") },
                     leadingIcon = { Icon(Icons.Outlined.Search, null) },
+                    trailingIcon = {
+                        if (buscando) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                 )
                 LazyColumn(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
-                    if (busca.isNotBlank() && !existeIgual) {
-                        item {
-                            Row(
+                    if (semBusca) {
+                        if (resultados.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Você compra sempre",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Cores.Secundario,
+                                    modifier = Modifier.padding(bottom = 8.dp),
+                                )
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    resultados.take(12).forEach { p ->
+                                        SuggestionChip(
+                                            onClick = { escolhido = p.paraEscolha() },
+                                            label = { Text(p.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                        )
+                                    }
+                                }
+                            }
+                        } else if (!buscando) {
+                            item {
+                                Text(
+                                    "Digite o nome do produto para buscar ou cadastrar.",
+                                    color = Cores.Secundario,
+                                    modifier = Modifier.padding(vertical = 16.dp),
+                                )
+                            }
+                        }
+                    } else {
+                        if (!existeIgual) {
+                            item {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = !salvando) {
+                                            onCadastrar(busca) { escolhido = Escolha(it, null, MEDIDA_UNIDADE) }
+                                        }
+                                        .padding(vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(Icons.Default.Add, null, tint = Cores.Marca)
+                                    Text(
+                                        "Cadastrar “${busca.trim()}”",
+                                        color = Cores.Marca,
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                        modifier = Modifier.padding(start = 12.dp),
+                                    )
+                                }
+                                HorizontalDivider(color = Cores.Linha)
+                            }
+                        }
+                        items(resultados, key = { it.id }) { p ->
+                            Column(
                                 Modifier
                                     .fillMaxWidth()
-                                    .clickable(enabled = !salvando) { onCadastrar(busca) { escolhido = it } }
-                                    .padding(vertical = 14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                                    .clickable { escolhido = p.paraEscolha() }
+                                    .padding(vertical = 12.dp),
                             ) {
-                                Icon(Icons.Default.Add, null, tint = Cores.Marca)
-                                Text(
-                                    "Cadastrar “${busca.trim()}”",
-                                    color = Cores.Marca,
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    modifier = Modifier.padding(start = 12.dp),
-                                )
+                                Text(p.name, style = MaterialTheme.typography.bodyLarge)
+                                val extra = listOfNotNull(
+                                    p.detalhes.takeIf { it.isNotBlank() },
+                                    p.ultimoPreco?.takeIf { it.signum() > 0 }
+                                        ?.let { "último ${precoComMedida(it, p.ultimaMedida == MEDIDA_KG)}" },
+                                ).joinToString(" · ")
+                                if (extra.isNotBlank()) {
+                                    Text(extra, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+                                }
                             }
                             HorizontalDivider(color = Cores.Linha)
                         }
-                    }
-                    if (achados.isEmpty() && busca.isBlank()) {
-                        item {
-                            Text(
-                                "Nenhum produto no catálogo ainda. Digite o nome para cadastrar.",
-                                color = Cores.Secundario,
-                                modifier = Modifier.padding(vertical = 16.dp),
-                            )
-                        }
-                    }
-                    items(achados, key = { it.id }) { p ->
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { escolhido = p }
-                                .padding(vertical = 12.dp),
-                        ) {
-                            Text(p.name, style = MaterialTheme.typography.bodyLarge)
-                            val extra = listOfNotNull(
-                                p.detalhes.takeIf { it.isNotBlank() },
-                                p.price?.takeIf { it.signum() > 0 }?.let { "ref. ${moeda(it)}" },
-                            ).joinToString(" · ")
-                            if (extra.isNotBlank()) {
-                                Text(extra, style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
-                            }
-                        }
-                        HorizontalDivider(color = Cores.Linha)
                     }
                 }
                 androidx.compose.foundation.layout.Spacer(Modifier.navigationBarsPadding().padding(bottom = 12.dp))

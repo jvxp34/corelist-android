@@ -11,12 +11,15 @@ import br.com.comprafacil.data.api.Lista
 import br.com.comprafacil.data.api.NovoItem
 import br.com.comprafacil.data.api.NovoProduto
 import br.com.comprafacil.data.api.Produto
+import br.com.comprafacil.data.api.ProdutoBusca
 import br.com.comprafacil.data.api.Resultado
 import br.com.comprafacil.data.api.chamar
 import br.com.comprafacil.data.api.exigirSucesso
 import java.math.BigDecimal
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonNull
@@ -38,6 +41,14 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
         private set
     var salvando by mutableStateOf(false)
         private set
+
+    /** Resultado da busca ao adicionar produto (ou os mais comprados, sem busca). */
+    var resultadosBusca by mutableStateOf<List<ProdutoBusca>>(emptyList())
+        private set
+    var buscando by mutableStateOf(false)
+        private set
+    private var termoBuscado: String? = null
+    private var buscaJob: Job? = null
 
     private val _mensagens = Channel<String>(Channel.BUFFERED)
     val mensagens = _mensagens.receiveAsFlow()
@@ -67,6 +78,26 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
                 is Resultado.Falha -> erro = r.mensagem
             }
             carregando = false
+        }
+    }
+
+    /** Busca no servidor com uma pequena espera, para não chamar a cada letra. */
+    fun buscarProdutos(texto: String) {
+        val termo = texto.trim()
+        if (termo == termoBuscado) return
+        termoBuscado = termo
+        buscaJob?.cancel()
+        buscaJob = viewModelScope.launch {
+            buscando = true
+            if (termo.isNotEmpty()) delay(250)
+            when (val r = chamar { app.api.buscarProdutos(termo.ifEmpty { null }) }) {
+                is Resultado.Ok -> resultadosBusca = r.valor
+                is Resultado.Falha -> {
+                    termoBuscado = null // deixa tentar de novo
+                    _mensagens.send(r.mensagem)
+                }
+            }
+            buscando = false
         }
     }
 
@@ -115,6 +146,8 @@ class CompraViewModel(private val app: AppContainer, private val listaId: Int) :
         }) { novo ->
             produtos = produtos + (produto.id to produto)
             lista = lista?.let { it.copy(items = it.items + novo) }
+            // Na próxima vez os atalhos e o último preço já levam este item em conta.
+            termoBuscado = null
             onOk()
         }
     }

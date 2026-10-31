@@ -76,6 +76,7 @@ import br.com.comprafacil.ui.comum.appViewModel
 import br.com.comprafacil.ui.comum.data
 import br.com.comprafacil.ui.comum.lerDecimal
 import br.com.comprafacil.ui.comum.moeda
+import br.com.comprafacil.ui.comum.precoComMedida
 import br.com.comprafacil.ui.comum.nomeProprio
 import br.com.comprafacil.ui.comum.precoParaCampo
 import br.com.comprafacil.ui.comum.quantidadeComMedida
@@ -199,8 +200,10 @@ fun TelaCompra(listaId: Int, onVoltar: () -> Unit) {
 
     if (adicionando) {
         FolhaAdicionar(
-            produtos = vm.produtos.values.toList(),
+            resultados = vm.resultadosBusca,
+            buscando = vm.buscando,
             salvando = vm.salvando,
+            onBuscar = vm::buscarProdutos,
             onFechar = { adicionando = false },
             onCadastrar = vm::cadastrarProduto,
             onAdicionar = { produto, dados -> vm.adicionarItem(produto, dados) { adicionando = false } },
@@ -453,7 +456,7 @@ private fun LinhaItem(
                 Text(
                     when (val preco = item.price) {
                         null -> "$qtd · sem preço"
-                        else -> "$qtd × ${moeda(preco)}${if (item.porKg) "/kg" else ""}"
+                        else -> "$qtd × ${precoComMedida(preco, item.porKg)}"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = Cores.Secundario,

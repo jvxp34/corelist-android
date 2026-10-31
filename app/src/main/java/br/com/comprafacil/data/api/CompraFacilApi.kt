@@ -53,6 +53,10 @@ interface CompraFacilApi {
     @DELETE("lists/{id}/items/{itemId}/")
     suspend fun removerItem(@Path("id") listaId: Int, @Path("itemId") itemId: Int): Response<ResponseBody>
 
+    /** Sem [busca], devolve os produtos que a pessoa mais compra (atalhos). */
+    @GET("lists/produtos/")
+    suspend fun buscarProdutos(@Query("q") busca: String? = null): List<ProdutoBusca>
+
     @GET("products/")
     suspend fun produtos(): List<Produto>
 

@@ -13,9 +13,10 @@ App nativo do CompraFácil (Kotlin + Jetpack Compose). Usa a mesma API do site
   Ler nota fiscal) e últimas compras.
 - **Listas:** em andamento e concluídas, criar lista com orçamento opcional.
 - **Modo de compra:** saldo do orçamento em destaque (verde, âmbar perto do limite,
-  vermelho quando estoura), marcar itens no carrinho, adicionar produto do catálogo
-  ou cadastrar um novo, escolher **Unidade** ou **Peso (kg)**, quantidade com − e +
-  (1 em 1 ou 0,1 kg), preço, remover, editar nome e orçamento, concluir compra,
+  vermelho quando estoura), marcar itens no carrinho, adicionar produto buscando
+  pelo nome (com atalhos dos mais comprados e o último preço já preenchido) ou
+  cadastrar um novo, escolher **Unidade** ou **Peso (kg)**, quantidade com − e +
+  (1 em 1 ou 0,1 kg; o peso aceita até 3 casas, ex.: 1,235 kg), preço, remover, editar nome e orçamento, concluir compra,
   excluir lista ou compra concluída. Itens de compra concluída continuam editáveis.
 - **Ler nota fiscal (NFC-e do Amazonas):** câmera lendo o QR code (com lanterna)
   ou link colado → conferência (nomes editáveis, remover item) → compra concluída.

@@ -217,4 +217,49 @@ class ApiTest {
         assertNull(s.takeRequest().getHeader("Authorization"))
         s.shutdown()
     }
+
+    // ---- Busca de produto ao adicionar na lista ----
+
+    @Test
+    fun buscaDeProdutoMandaOTermoELeUltimoPrecoEMedida() = runBlocking {
+        val s = MockWebServer()
+        s.enqueue(
+            MockResponse().setBody(
+                """[{"id":7,"name":"Arroz Tio João 5kg","brand":"Tio João","embalagem":"5 kg",
+                "ultimo_preco":"24.90","ultima_medida":"unit","vezes":4},
+                {"id":9,"name":"Banana prata","brand":null,"embalagem":"",
+                "ultimo_preco":"6.99","ultima_medida":"kg","vezes":2}]""",
+            ),
+        )
+        val api = Rede(TokensEmMemoria(Tokens("a", "r")), s.url("/api").toString()).api
+
+        val achados = api.buscarProdutos("arr")
+
+        assertEquals("/api/lists/produtos/?q=arr", s.takeRequest().path)
+        assertEquals(BigDecimal("24.90"), achados[0].ultimoPreco)
+        assertEquals("Tio João · 5 kg", achados[0].detalhes)
+        assertEquals("kg", achados[1].ultimaMedida)
+        assertEquals("R$ 6,99/kg", br.com.comprafacil.ui.comum.precoComMedida(achados[1].ultimoPreco!!, true))
+        s.shutdown()
+    }
+
+    @Test
+    fun atalhosNaoMandamTermo() = runBlocking {
+        val s = MockWebServer()
+        s.enqueue(MockResponse().setBody("[]"))
+        val api = Rede(TokensEmMemoria(Tokens("a", "r")), s.url("/api").toString()).api
+
+        api.buscarProdutos(null)
+
+        assertEquals("/api/lists/produtos/", s.takeRequest().path)
+        s.shutdown()
+    }
+
+    @Test
+    fun pesoAceitaAteTresCasas() {
+        assertEquals("1,235", br.com.comprafacil.ui.comum.limitarCasas("1,2357", 3))
+        assertEquals("0.04", br.com.comprafacil.ui.comum.limitarCasas("0.04", 3))
+        assertEquals("12", br.com.comprafacil.ui.comum.limitarCasas("12", 3))
+        assertEquals("1,235 kg", br.com.comprafacil.ui.comum.quantidadeComMedida(BigDecimal("1.235"), true))
+    }
 }
