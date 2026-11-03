@@ -1,0 +1,50 @@
+# Gera o APK de release a cada push na main (e quando alguém pede pela aba
+# Actions). O APK fica nos "Artifacts" da execução por 30 dias.
+name: APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # O mesmo Java que o projeto usa (gradle/gradle-daemon-jvm.properties).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Testes
+        run: ./gradlew testDebugUnitTest --console=plain
+
+      # Release aponta para o site publicado e passa pelo R8. Para a
+      # apresentação ele é assinado com a chave de debug (ver README).
+      - name: APK de release
+        run: ./gradlew assembleRelease --console=plain
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: comprafacil-release
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      # Relatório dos testes quando algum falhar.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: relatorio-testes
+          path: app/build/reports/tests/
+          retention-days: 7
