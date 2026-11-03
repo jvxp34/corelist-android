@@ -117,6 +117,10 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 Para um APK menor, só para um tipo de aparelho, acrescente
 `-Pcomprafacil.abi=x86_64` (emulador) ou `-Pcomprafacil.abi=arm64-v8a` (celular).
 
+**APK automático:** a cada push na `main`, o GitHub Actions
+(`.github/workflows/apk.yml`) roda os testes e gera o APK de release. Ele fica
+em **Actions › a execução › Artifacts › comprafacil-release** por 30 dias.
+
 O **release** é o que se entrega (aponta para o site publicado e passa pelo R8, que
 o deixa bem menor). Para a apresentação ele é assinado com a chave de debug, o
 que permite instalar em qualquer celular (é preciso permitir "instalar apps
