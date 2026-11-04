@@ -63,6 +63,14 @@ interface CompraFacilApi {
     @POST("products/")
     suspend fun criarProduto(@Body corpo: NovoProduto): Produto
 
+    /** Apaga do catálogo (só o próprio cadastro sem uso). 409 = está em lista ou tem preço de nota. */
+    @DELETE("products/{id}/")
+    suspend fun apagarProduto(@Path("id") produtoId: Int): Response<ResponseBody>
+
+    /** Some só da tela e da busca desta pessoa; o catálogo continua igual para os outros. */
+    @POST("products/{id}/esconder/")
+    suspend fun esconderProduto(@Path("id") produtoId: Int): Response<ResponseBody>
+
     /** Guarda o código e puxa foto, marca e embalagem do Open Food Facts. 409 = código em conflito. */
     @POST("products/{id}/codigo-de-barras/")
     suspend fun completarPeloCodigo(@Path("id") produtoId: Int, @Body corpo: CodigoDeBarras): ProdutoCompletado
@@ -78,7 +86,18 @@ interface CompraFacilApi {
 
     /** Preços da cidade. Sem [termo], os mais recentes. [dias]: 7, 30 ou 90. */
     @GET("lists/precos/")
-    suspend fun precos(@Query("q") termo: String, @Query("dias") dias: Int): PrecosDaCidade
+    suspend fun precos(
+        @Query("q") termo: String,
+        @Query("dias") dias: Int,
+        // Perto de mim (opcional): posição do aparelho e raio em km (2, 5 ou 10).
+        @Query("lat") lat: Double? = null,
+        @Query("lng") lng: Double? = null,
+        @Query("raio") raio: Int? = null,
+    ): PrecosDaCidade
+
+    /** Endereço aproximado de uma posição, para mostrar "Você está perto de: …". */
+    @GET("lists/onde-estou/")
+    suspend fun ondeEstou(@Query("lat") lat: Double, @Query("lng") lng: Double): EnderecoAproximado
 
     @GET("lists/{id}/precos/")
     suspend fun precosDaLista(@Path("id") listaId: Int): PrecosDaLista

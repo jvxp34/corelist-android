@@ -3,6 +3,15 @@
 package br.com.comprafacil.ui.nota
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontWeight
+import br.com.comprafacil.data.api.ListaParecida
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,9 +73,11 @@ fun TelaConferirNota(
     onLerOutra: () -> Unit,
     onAbrirLista: (Int) -> Unit,
     onInicio: () -> Unit,
+    onConcluirLista: (Int) -> Unit,
 ) {
     val vm = appViewModel(key = "nota-$link") { NotaViewModel(it, link) }
     val importada = vm.importada
+    var ignorouLista by rememberSaveable { mutableStateOf(false) }
 
     if (importada != null) {
         // Compra salva: sugere a próxima lista com o que foi comprado.
@@ -138,6 +149,17 @@ fun TelaConferirNota(
                             }
                         }
                     }
+                    // A nota parece ser de uma lista em andamento: concluir a lista com ela
+                    // liga os produtos, troca os preços pelos da nota e marca o que ficou de fora.
+                    if (!ignorouLista && nota.listasParecidas.isNotEmpty()) {
+                        item {
+                            CartaoListaParecida(
+                                listas = nota.listasParecidas,
+                                onConcluir = onConcluirLista,
+                                onIgnorar = { ignorouLista = true },
+                            )
+                        }
+                    }
                     item {
                         OutlinedTextField(
                             value = vm.nomeCompra,
@@ -199,6 +221,52 @@ fun TelaConferirNota(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/** "Esta nota parece ser da sua lista X": concluir a lista em vez de criar uma compra nova. */
+@Composable
+private fun CartaoListaParecida(
+    listas: List<ListaParecida>,
+    onConcluir: (Int) -> Unit,
+    onIgnorar: () -> Unit,
+) {
+    val melhor = listas.first()
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Cores.MarcaClara, RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Box(Modifier.size(40.dp).background(Color.White, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.Checklist, null, tint = Cores.Marca, modifier = Modifier.size(20.dp))
+            }
+            Column(Modifier.padding(start = 12.dp)) {
+                Text("Esta nota parece ser da sua lista “${melhor.nome}”", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "${melhor.itensNaNota} de ${melhor.totalItens} produtos da lista estão na nota. Concluindo a lista " +
+                        "com a nota, os preços pagos entram nos itens e o que você não comprou fica marcado.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Cores.Secundario,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+        }
+        BotaoPrincipal("Concluir a lista com esta nota", { onConcluir(melhor.id) }, Modifier.fillMaxWidth())
+        BotaoSecundario("Não, salvar como compra nova", onIgnorar, Modifier.fillMaxWidth())
+        if (listas.size > 1) {
+            Text("Ou use outra lista:", style = MaterialTheme.typography.bodySmall, color = Cores.Secundario)
+            listas.drop(1).forEach { outra ->
+                Text(
+                    "${outra.nome} (${outra.itensNaNota} de ${outra.totalItens})",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = Cores.Marca,
+                    modifier = Modifier.clickable { onConcluir(outra.id) }.padding(vertical = 4.dp),
+                )
             }
         }
     }

@@ -1,5 +1,26 @@
 package br.com.comprafacil.ui.produtos
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import br.com.comprafacil.data.api.Loja
+import br.com.comprafacil.ui.comum.EstadoLocalizacao
+import br.com.comprafacil.ui.comum.Localizacao
+import br.com.comprafacil.ui.comum.Origem
+import br.com.comprafacil.ui.comum.rememberLocalizacao
+import br.com.comprafacil.ui.comum.textoDistancia
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -80,6 +101,42 @@ class MenorPrecoViewModel(private val app: AppContainer) : ViewModel() {
         private set
     private var job: Job? = null
 
+    // ---- Perto de mim (a posição fica só nesta tela, não é salva) ----
+    var origem by mutableStateOf<Origem?>(null)
+        private set
+    /** Raio em km (2, 5 ou 10); null = toda a cidade. */
+    var raio by mutableStateOf<Int?>(5)
+        private set
+    var endereco by mutableStateOf<String?>(null)
+        private set
+    private var enderecoJob: Job? = null
+
+    fun mudarOrigem(nova: Origem?) {
+        if (nova == origem) return
+        origem = nova
+        endereco = null
+        enderecoJob?.cancel()
+        if (nova != null) {
+            enderecoJob = viewModelScope.launch {
+                // O mapa às vezes demora na primeira vez: tenta de novo uma vez.
+                repeat(2) { tentativa ->
+                    val texto = (chamar { app.api.ondeEstou(nova.lat, nova.lng) } as? Resultado.Ok)?.valor?.texto
+                    if (texto != null) {
+                        endereco = texto
+                        return@launch
+                    }
+                    if (tentativa == 0) delay(2000)
+                }
+            }
+        }
+        buscar()
+    }
+
+    fun mudarRaio(novo: Int?) {
+        raio = novo
+        buscar()
+    }
+
     fun mudarTexto(novo: String) {
         texto = novo
         buscar(espera = 250)
@@ -95,7 +152,8 @@ class MenorPrecoViewModel(private val app: AppContainer) : ViewModel() {
         job = viewModelScope.launch {
             if (espera > 0) delay(espera) // espera a pessoa parar de digitar
             carregando = true
-            when (val r = chamar { app.api.precos(texto.trim(), dias) }) {
+            val o = origem
+            when (val r = chamar { app.api.precos(texto.trim(), dias, o?.lat, o?.lng, if (o != null) raio else null) }) {
                 is Resultado.Ok -> {
                     resultados = r.valor.produtos
                     erro = null
@@ -113,6 +171,8 @@ class MenorPrecoViewModel(private val app: AppContainer) : ViewModel() {
 fun TelaMenorPreco(onLerNota: () -> Unit) {
     val vm = appViewModel { MenorPrecoViewModel(it) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.buscar() }
+    val localizacao = rememberLocalizacao()
+    LaunchedEffect(localizacao.origem) { vm.mudarOrigem(localizacao.origem) }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
@@ -141,6 +201,7 @@ fun TelaMenorPreco(onLerNota: () -> Unit) {
                     ) { Text("$periodo dias") }
                 }
             }
+            PertoDeMim(localizacao, vm)
         }
 
         val resultados = vm.resultados
@@ -159,7 +220,11 @@ fun TelaMenorPreco(onLerNota: () -> Unit) {
                         item {
                             EstadoVazio(
                                 Icons.Outlined.Sell,
-                                if (termo.isNotEmpty()) "Ainda não temos preço de \"$termo\"" else "Ainda não há preços da cidade",
+                                when {
+                                    vm.origem != null && vm.raio != null -> "Nenhuma loja com preço até ${vm.raio} km de você"
+                                    termo.isNotEmpty() -> "Ainda não temos preço de \"$termo\""
+                                    else -> "Ainda não há preços da cidade"
+                                },
                                 "Os preços aparecem quando alguém lê uma nota fiscal com esse produto.",
                                 acao = { BotaoPrincipal("Ler uma nota fiscal", onLerNota, icone = Icons.Outlined.QrCodeScanner) },
                             )
@@ -231,7 +296,7 @@ private fun CartaoDoProduto(resumo: ResumoPreco) {
                         )
                         Text(precoComMedida(agora.preco, agora.medida), style = MaterialTheme.typography.headlineSmall)
                         Text(
-                            "${nomeDaLoja(agora.loja)} · ${quandoFoi(agora.data)}",
+                            "${nomeComDistancia(agora.loja)} · ${quandoFoi(agora.data)}",
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -254,7 +319,7 @@ private fun CartaoDoProduto(resumo: ResumoPreco) {
 
             if (menor != null) {
                 Text(
-                    "Menor preço em ${menor.dias} dias: ${precoComMedida(menor.preco, menor.medida)} no ${nomeDaLoja(menor.loja)} (${quandoFoi(menor.data)})",
+                    "Menor preço em ${menor.dias} dias: ${precoComMedida(menor.preco, menor.medida)} no ${nomeComDistancia(menor.loja)} (${quandoFoi(menor.data)})",
                     style = MaterialTheme.typography.bodySmall,
                     color = Cores.Secundario,
                     modifier = Modifier.padding(top = 10.dp),
@@ -297,7 +362,7 @@ private fun LinhaDaLoja(linha: PrecoNaLoja) {
         LogoDaLoja(linha.loja, tamanho = 28.dp)
         Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
             Text(
-                nomeDaLoja(linha.loja),
+                nomeComDistancia(linha.loja),
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -333,3 +398,103 @@ private fun LinhaDaLoja(linha: PrecoNaLoja) {
         }
     }
 }
+
+/** "Assaí Atacadista · a 1,2 km" quando a busca usa a localização. */
+private fun nomeComDistancia(loja: Loja): String =
+    nomeDaLoja(loja) + (textoDistancia(loja.distanciaKm)?.let { " · a $it" } ?: "")
+
+/** "Lojas perto de mim" e, com a localização, o raio e onde a pessoa está. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PertoDeMim(localizacao: Localizacao, vm: MenorPrecoViewModel) {
+    Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (localizacao.estado == EstadoLocalizacao.ATIVA) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.LocationOn, null, tint = Cores.Marca, modifier = Modifier.size(18.dp))
+                Text(
+                    "Perto de mim:",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    modifier = Modifier.padding(start = 4.dp).weight(1f),
+                )
+                IconButton(onClick = localizacao::desligar, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Outlined.Close, "Parar de usar minha localização", tint = Cores.Secundario)
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                (RAIOS_KM + listOf(null)).forEach { opcao ->
+                    FilterChip(
+                        selected = vm.raio == opcao,
+                        onClick = { vm.mudarRaio(opcao) },
+                        label = { Text(if (opcao != null) "até $opcao km" else "toda a cidade") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Cores.Marca,
+                            selectedLabelColor = Color.White,
+                        ),
+                    )
+                }
+            }
+            vm.origem?.let { OndeEstou(it, vm.endereco) }
+        } else {
+            val buscando = localizacao.estado == EstadoLocalizacao.BUSCANDO
+            OutlinedButton(
+                onClick = localizacao::pedir,
+                enabled = !buscando,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Cores.MarcaClara),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Cores.MarcaClara, contentColor = Cores.MarcaEscura),
+            ) {
+                Icon(Icons.Outlined.LocationOn, null, modifier = Modifier.size(16.dp))
+                Text(
+                    if (buscando) "Buscando sua localização…" else "Lojas perto de mim",
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+        }
+        localizacao.mensagem?.let { aviso ->
+            // Verde, âmbar e vermelho ficam só para o orçamento: aviso neutro.
+            Text(
+                aviso,
+                style = MaterialTheme.typography.bodySmall,
+                color = Cores.Texto,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Cores.Linha, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+/** "Você está perto de: Rua X, Bairro" e o botão para ver o ponto no mapa. */
+@Composable
+private fun OndeEstou(origem: Origem, endereco: String?) {
+    val context = LocalContext.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Cores.MarcaClara, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.LocationOn, null, tint = Cores.Marca, modifier = Modifier.size(16.dp))
+        Text(
+            if (endereco != null) "Você está perto de: $endereco" else "Usando sua localização",
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
+        )
+        Text(
+            "Ver no mapa",
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = Cores.Marca,
+            modifier = Modifier.clickable {
+                val uri = Uri.parse("geo:${origem.lat},${origem.lng}?q=${origem.lat},${origem.lng}(Você está aqui)")
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            },
+        )
+    }
+}
+
+private val RAIOS_KM = listOf(2, 5, 10)

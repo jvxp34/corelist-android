@@ -24,6 +24,7 @@ import br.com.comprafacil.data.api.PrecosDaCidade
 import br.com.comprafacil.ui.comum.linkComoChegar
 import br.com.comprafacil.ui.comum.nomeDaLoja
 import br.com.comprafacil.ui.comum.quandoFoi
+import br.com.comprafacil.ui.comum.textoDistancia
 import java.math.BigDecimal
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.jsonArray
@@ -87,6 +88,24 @@ class ApiTest {
         assertEquals("Assaí Atacadista", nomeDaLoja(loja))
         assertEquals("assai", loja.icone)
         assertTrue(primeiro.menorNoPeriodo!!.preco > BigDecimal.ZERO)
+    }
+
+    @Test
+    fun notaAchaAListaEDistanciaDaLoja() {
+        val nota = JsonApi.decodeFromString<NotaLida>(
+            """{"total":"69.92","itens":[],"listas_parecidas":[{"id":7,"nome":"Próxima compra","itens_na_nota":5,"total_itens":7}]}""",
+        )
+        assertEquals("Próxima compra", nota.listasParecidas.single().nome)
+        assertEquals(5, nota.listasParecidas.single().itensNaNota)
+        // Resposta sem o campo (backend antigo) continua funcionando.
+        assertTrue(JsonApi.decodeFromString<NotaLida>("""{"total":"1.00"}""").listasParecidas.isEmpty())
+
+        val loja = JsonApi.decodeFromString<Loja>("""{"id":1,"nome":"SENDAS","distancia_km":1.2}""")
+        assertEquals(1.2, loja.distanciaKm!!, 0.0)
+        assertEquals("1,2 km", textoDistancia(1.2))
+        assertEquals("350 m", textoDistancia(0.35))
+        assertEquals("3 km", textoDistancia(3.0))
+        assertNull(textoDistancia(null))
     }
 
     @Test

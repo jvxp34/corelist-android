@@ -115,6 +115,8 @@ data class Produto(
     val barcode: String? = null,
     @SerialName("image_url") val imagem: String? = null,
     @SerialName("data_source") val origem: String? = null,
+    /** Cadastro da própria pessoa, ainda sem uso: pode ser apagado de vez. */
+    @SerialName("pode_remover") val podeRemover: Boolean = false,
 ) {
     /** "Camil · 5 kg": marca e embalagem, o que existir (igual ao site). */
     val detalhes: String
@@ -188,6 +190,8 @@ data class Loja(
     /** assai, atacadao, carrefour ou db: o logo em res/drawable/loja_<icone>.png. */
     val icone: String? = null,
     val endereco: String? = null,
+    /** Só quando a busca leva a localização ("Perto de mim"). */
+    @SerialName("distancia_km") val distanciaKm: Double? = null,
 )
 
 @Serializable
@@ -227,7 +231,20 @@ data class ResumoPreco(
 )
 
 @Serializable
-data class PrecosDaCidade(val dias: Int = 30, val produtos: List<ResumoPreco> = emptyList())
+data class PrecosDaCidade(
+    val dias: Int = 30,
+    @SerialName("raio_km") val raioKm: Int? = null,
+    val produtos: List<ResumoPreco> = emptyList(),
+)
+
+/** Endereço aproximado da pessoa (rua, bairro e cidade), pelo OpenStreetMap. */
+@Serializable
+data class EnderecoAproximado(
+    val texto: String? = null,
+    val rua: String? = null,
+    val bairro: String? = null,
+    val cidade: String? = null,
+)
 
 @Serializable
 data class PrecoDoItem(
@@ -282,6 +299,16 @@ data class NotaLida(
     val total: Decimal,
     val itens: List<ItemNota> = emptyList(),
     @SerialName("lista_importada") val listaImportada: Int? = null,
+    /** Listas em andamento cujos produtos aparecem na nota (até 3, a mais parecida primeiro). */
+    @SerialName("listas_parecidas") val listasParecidas: List<ListaParecida> = emptyList(),
+)
+
+@Serializable
+data class ListaParecida(
+    val id: Int,
+    val nome: String,
+    @SerialName("itens_na_nota") val itensNaNota: Int,
+    @SerialName("total_itens") val totalItens: Int,
 )
 
 // ---- Nota fiscal dentro de uma lista em andamento ----

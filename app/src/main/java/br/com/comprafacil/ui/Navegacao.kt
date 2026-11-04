@@ -210,6 +210,12 @@ fun Navegacao(app: AppContainer) {
                         nav.navigate(RotaCompra(id)) { popUpTo<RotaConferirNota> { inclusive = true } }
                     },
                     onInicio = { nav.irParaAba(RotaInicio) },
+                    // A nota é de uma lista em andamento: segue para concluir essa lista com ela.
+                    onConcluirLista = { listaId ->
+                        nav.navigate(RotaNotaNaLista(listaId, e.toRoute<RotaConferirNota>().link)) {
+                            popUpTo<RotaConferirNota> { inclusive = true }
+                        }
+                    },
                 )
             }
         }

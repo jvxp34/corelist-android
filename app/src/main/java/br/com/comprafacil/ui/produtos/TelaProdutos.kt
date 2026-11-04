@@ -32,11 +32,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,6 +77,7 @@ import br.com.comprafacil.data.api.NovoProduto
 import br.com.comprafacil.data.api.Produto
 import br.com.comprafacil.data.api.Resultado
 import br.com.comprafacil.data.api.chamar
+import br.com.comprafacil.data.api.exigirSucesso
 import br.com.comprafacil.ui.comum.AvisoErro
 import br.com.comprafacil.ui.comum.BotaoPrincipal
 import br.com.comprafacil.ui.comum.BotaoSecundario
@@ -125,6 +129,28 @@ class ProdutosViewModel(private val app: AppContainer) : ViewModel() {
                 is Resultado.Falha -> erro = r.mensagem
             }
             carregando = false
+        }
+    }
+
+    /** Aviso da lista (ex.: produto que não pôde sair). */
+    var avisoLista by mutableStateOf<String?>(null)
+        private set
+
+    /**
+     * Lixeira: apaga de vez quando dá (cadastro seu ainda sem uso); senão o
+     * produto some só da sua tela, porque o catálogo é de todos.
+     */
+    fun remover(produto: Produto) {
+        viewModelScope.launch {
+            avisoLista = null
+            val r = chamar {
+                if (produto.podeRemover) app.api.apagarProduto(produto.id).exigirSucesso()
+                else app.api.esconderProduto(produto.id).exigirSucesso()
+            }
+            when (r) {
+                is Resultado.Ok -> produtos = produtos?.filter { it.id != produto.id }
+                is Resultado.Falha -> avisoLista = r.mensagem
+            }
         }
     }
 
@@ -204,6 +230,7 @@ fun TelaProdutos() {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.carregar() }
     var busca by rememberSaveable { mutableStateOf("") }
     var cadastrando by rememberSaveable { mutableStateOf(false) }
+    var removendo by remember { mutableStateOf<Produto?>(null) }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
@@ -257,6 +284,7 @@ fun TelaProdutos() {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    vm.avisoLista?.let { item { AvisoErro(it) } }
                     if (mostrados.isEmpty()) {
                         item {
                             EstadoVazio(
@@ -283,6 +311,10 @@ fun TelaProdutos() {
                                         AdicionarFoto(p.id, p.name, onCompletar = vm::trocarProduto)
                                     }
                                 }
+                                // Lixeira em todos: apaga quando dá, senão esconde só para a pessoa.
+                                IconButton(onClick = { removendo = p }, modifier = Modifier.size(36.dp)) {
+                                    Icon(Icons.Outlined.DeleteOutline, "Remover ${p.name}", tint = Cores.Secundario)
+                                }
                             }
                         }
                     }
@@ -296,6 +328,26 @@ fun TelaProdutos() {
 
     if (cadastrando) {
         FolhaCadastro(vm, onFechar = { cadastrando = false })
+    }
+
+    removendo?.let { p ->
+        AlertDialog(
+            onDismissRequest = { removendo = null },
+            title = { Text("Remover “${p.name}”?") },
+            text = {
+                Text(
+                    if (p.podeRemover) "Você cadastrou este produto e ele ainda não foi usado: ele sai do catálogo."
+                    else "O produto sai da sua tela de produtos e da sua busca. Suas listas e compras continuam como estão.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    removendo = null
+                    vm.remover(p)
+                }) { Text("Remover", color = Cores.EstourouTexto) }
+            },
+            dismissButton = { TextButton(onClick = { removendo = null }) { Text("Cancelar") } },
+        )
     }
 }
 
