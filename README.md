@@ -117,6 +117,10 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 Para um APK menor, só para um tipo de aparelho, acrescente
 `-Pcomprafacil.abi=x86_64` (emulador) ou `-Pcomprafacil.abi=arm64-v8a` (celular).
 
+**Testar o R8 sem conta real:** `./gradlew installR8local` instala o
+"CompraFácil (R8)": igual ao release (código encolhido pelo R8), mas falando
+com o Django do PC. Assim dá para conferir o APK encolhido com a conta demo.
+
 **APK automático:** a cada push na `main`, o GitHub Actions
 (`.github/workflows/apk.yml`) roda os testes e gera o APK de release. Ele fica
 em **Actions › a execução › Artifacts › comprafacil-release** por 30 dias.

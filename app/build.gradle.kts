@@ -42,6 +42,16 @@ android {
             // Play Store, troque por uma chave própria (veja o README).
             signingConfig = signingConfigs.getByName("debug")
         }
+        // Igual ao release (R8 ligado), mas falando com o Django do PC: serve
+        // para testar o APK encolhido com a conta demo, sem conta real.
+        // ./gradlew installR8local
+        create("r8local") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".r8"
+            matchingFallbacks += "release"
+            buildConfigField("String", "API_URL", "\"$apiUrlDebug\"")
+            resValue("string", "app_name", "CompraFácil (R8)")
+        }
     }
 
     compileOptions {
