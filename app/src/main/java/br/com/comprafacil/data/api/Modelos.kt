@@ -277,6 +277,55 @@ data class PrecosDaLista(
     @SerialName("melhor_loja") val melhorLoja: List<MelhorLoja> = emptyList(),
 )
 
+// ---- Assistente de preços (chat do Início) ----
+
+/** Uma fala do histórico enviado: papel "usuario" ou "assistente". */
+@Serializable
+data class FalaDoChat(val papel: String, val texto: String)
+
+@Serializable
+data class PerguntaAoAssistente(
+    val mensagens: List<FalaDoChat>,
+    val lat: Double? = null,
+    val lng: Double? = null,
+)
+
+/** Link que acompanha a resposta: lugar no mapa ("maps"), página ("web") ou busca no Google ("busca"). */
+@Serializable
+data class FonteDaResposta(val tipo: String = "web", val titulo: String = "", val url: String)
+
+/** Produto citado na resposta, com foto do catálogo e o menor preço das notas. */
+@Serializable
+data class ProdutoDoChat(
+    val id: Int,
+    val nome: String,
+    val embalagem: String? = null,
+    @SerialName("imagem_url") val imagem: String? = null,
+    val preco: Decimal? = null,
+    val medida: String? = null,
+    val loja: String? = null,
+)
+
+/** Loja citada na resposta, com logo, distância e o link da rota. */
+@Serializable
+data class LojaDoChat(
+    val nome: String,
+    val marca: String? = null,
+    val icone: String? = null,
+    @SerialName("distancia_km") val distanciaKm: Double? = null,
+    val url: String,
+)
+
+@Serializable
+data class RespostaDoAssistente(
+    val resposta: String,
+    /** Quem escreveu: gemini, groq, claude ou sem_ia (frases prontas). */
+    val fonte: String = "sem_ia",
+    val fontes: List<FonteDaResposta> = emptyList(),
+    val produtos: List<ProdutoDoChat> = emptyList(),
+    val lojas: List<LojaDoChat> = emptyList(),
+)
+
 // ---- Nota fiscal (NFC-e) ----
 
 @Serializable

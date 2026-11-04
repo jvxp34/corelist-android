@@ -76,6 +76,7 @@ import kotlinx.serialization.Serializable
 @Serializable object RotaLerNota
 @Serializable data class RotaConferirNota(val link: String)
 @Serializable data class RotaLerNotaDaLista(val listaId: Int)
+@Serializable data class RotaAssistente(val pergunta: String? = null)
 @Serializable data class RotaNotaNaLista(val listaId: Int, val link: String)
 
 private fun NavHostController.irParaInicio(rota: Any) = navigate(rota) {
@@ -154,6 +155,13 @@ fun Navegacao(app: AppContainer) {
                     onLerNota = { nav.navigate(RotaLerNota) },
                     onVerListas = { nav.irParaAba(RotaListas()) },
                     onSair = app::sair,
+                    onAssistente = { pergunta -> nav.navigate(RotaAssistente(pergunta)) },
+                )
+            }
+            composable<RotaAssistente> { e ->
+                br.com.comprafacil.ui.assistente.TelaAssistente(
+                    perguntaInicial = e.toRoute<RotaAssistente>().pergunta,
+                    onVoltar = { nav.popBackStack() },
                 )
             }
             composable<RotaListas> { e ->

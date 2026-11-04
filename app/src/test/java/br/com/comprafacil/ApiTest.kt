@@ -19,7 +19,10 @@ import br.com.comprafacil.ui.comum.moeda
 import br.com.comprafacil.ui.comum.quantidadeComMedida
 import br.com.comprafacil.ui.comum.situacaoDoOrcamento
 import br.com.comprafacil.ui.nota.ehLinkDeNota
+import br.com.comprafacil.data.api.FalaDoChat
 import br.com.comprafacil.data.api.Loja
+import br.com.comprafacil.data.api.PerguntaAoAssistente
+import br.com.comprafacil.data.api.RespostaDoAssistente
 import br.com.comprafacil.data.api.PrecosDaCidade
 import br.com.comprafacil.ui.comum.linkComoChegar
 import br.com.comprafacil.ui.comum.nomeDaLoja
@@ -106,6 +109,25 @@ class ApiTest {
         assertEquals("350 m", textoDistancia(0.35))
         assertEquals("3 km", textoDistancia(3.0))
         assertNull(textoDistancia(null))
+    }
+
+    @Test
+    fun respostaDoAssistente() {
+        // Resposta real do backend local, sem IA configurada.
+        val r = JsonApi.decodeFromString<RespostaDoAssistente>(
+            """{"resposta":"IOG VIG 800G BATIDO: o mais barato é R$ 9,90 no Assaí Atacadista (a 1,3 km).","fonte":"sem_ia","fontes":[],
+               "produtos":[{"id":17,"nome":"IOG VIG 800G BATIDO","embalagem":null,"imagem_url":null,"preco":"9.90","medida":"unit","loja":"Assaí Atacadista"}],
+               "lojas":[{"nome":"SENDAS DISTRIBUIDORA S/A","marca":"Assaí Atacadista","icone":"assai","distancia_km":1.3,"url":"https://www.google.com/maps/dir/?api=1"}]}""",
+        )
+        assertEquals("sem_ia", r.fonte)
+        assertEquals(BigDecimal("9.90"), r.produtos.single().preco)
+        assertEquals("assai", r.lojas.single().icone)
+        // O histórico vai só com papel e texto.
+        val corpo = JsonApi.encodeToString(
+            PerguntaAoAssistente.serializer(),
+            PerguntaAoAssistente(listOf(FalaDoChat("usuario", "café?"))),
+        )
+        assertEquals("""{"mensagens":[{"papel":"usuario","texto":"café?"}]}""", corpo)
     }
 
     @Test

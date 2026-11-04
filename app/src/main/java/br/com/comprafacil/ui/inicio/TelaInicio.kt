@@ -110,6 +110,7 @@ fun TelaInicio(
     onLerNota: () -> Unit,
     onVerListas: () -> Unit,
     onSair: () -> Unit,
+    onAssistente: (String?) -> Unit,
 ) {
     val vm = appViewModel { InicioViewModel(it) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.carregar() }
@@ -181,6 +182,8 @@ fun TelaInicio(
                 Atalho("Ler nota fiscal", Icons.Outlined.QrCodeScanner, onLerNota, Modifier.weight(1f))
             }
 
+            br.com.comprafacil.ui.assistente.CartaoAssistente(onAbrir = onAssistente)
+
             if (vm.ultimas.isNotEmpty()) {
                 Cartao(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
@@ -198,7 +201,10 @@ fun TelaInicio(
                                 Text(
                                     buildString {
                                         append(lista.name)
-                                        diaMes(lista.concluidaEm).takeIf { it.isNotBlank() }?.let { append(" · $it") }
+                                        // O nome da compra pela nota já traz o dia ("Loja 28/10").
+                                        diaMes(lista.concluidaEm)
+                                            .takeIf { it.isNotBlank() && !lista.name.contains(it) }
+                                            ?.let { append(" · $it") }
                                     },
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,

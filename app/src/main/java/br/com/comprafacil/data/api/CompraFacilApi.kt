@@ -102,6 +102,10 @@ interface CompraFacilApi {
         @Query("raio") raio: Int? = null,
     ): PrecosDaCidade
 
+    /** Chat de preços: o histórico vai inteiro (o servidor corta o excesso). */
+    @POST("lists/assistente/")
+    suspend fun perguntarAoAssistente(@Body corpo: PerguntaAoAssistente): RespostaDoAssistente
+
     /** Endereço aproximado de uma posição, para mostrar "Você está perto de: …". */
     @GET("lists/onde-estou/")
     suspend fun ondeEstou(@Query("lat") lat: Double, @Query("lng") lng: Double): EnderecoAproximado
