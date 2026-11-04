@@ -19,6 +19,13 @@ interface CompraFacilApi {
     @POST("auth/register/")
     suspend fun cadastrar(@Body corpo: CadastroRequest): JsonObject
 
+    /**
+     * Esqueci a senha: o servidor manda um e-mail com o link do site para criar
+     * a senha nova. A resposta é a mesma exista a conta ou não.
+     */
+    @POST("auth/senha/esqueci/")
+    suspend fun pedirLinkDeSenha(@Body corpo: PedidoDeSenha): Mensagem
+
     @POST("auth/logout/")
     suspend fun sair(@Body corpo: RefreshRequest): Response<ResponseBody>
 

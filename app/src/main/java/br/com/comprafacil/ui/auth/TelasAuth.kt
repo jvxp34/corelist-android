@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
@@ -47,7 +48,7 @@ import br.com.comprafacil.ui.comum.appViewModel
 import br.com.comprafacil.ui.theme.Cores
 
 @Composable
-fun TelaLogin(onCriarConta: () -> Unit) {
+fun TelaLogin(onCriarConta: () -> Unit, onEsqueciSenha: () -> Unit) {
     val vm = appViewModel { AuthViewModel(it) }
     val expirou by vm.expirou.collectAsStateWithLifecycle()
 
@@ -70,6 +71,9 @@ fun TelaLogin(onCriarConta: () -> Unit) {
         }
         CampoEmail(vm.email) { vm.email = it }
         CampoSenha(vm.senha, { vm.senha = it }, onConcluir = vm::entrar)
+        TextButton(onClick = onEsqueciSenha, modifier = Modifier.align(Alignment.End)) {
+            Text("Esqueci minha senha")
+        }
         vm.erro?.let { AvisoErro(it) }
         BotaoPrincipal("Entrar", vm::entrar, Modifier.fillMaxWidth(), carregando = vm.carregando)
         TextButton(
@@ -102,6 +106,64 @@ fun TelaCadastro(onJaTenhoConta: () -> Unit) {
         BotaoPrincipal("Criar conta", vm::cadastrar, Modifier.fillMaxWidth(), carregando = vm.carregando)
         TextButton(onClick = onJaTenhoConta, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("Já tenho conta. Entrar")
+        }
+    }
+}
+
+/**
+ * Esqueci a senha: o servidor manda um e-mail com um link. A pessoa cria a
+ * senha nova pelo link (no site) e depois entra no app com ela.
+ */
+@Composable
+fun TelaEsqueciSenha(onEntrar: () -> Unit) {
+    // ViewModel próprio, para o e-mail e o aviso não vazarem para o login.
+    val vm = appViewModel(key = "esqueci-senha") { AuthViewModel(it) }
+    val enviado = vm.linkEnviado
+
+    LayoutAuth(
+        titulo = "Esqueceu a senha?",
+        subtitulo = "Informe o e-mail da conta. Mandamos um link para você criar uma senha nova.",
+    ) {
+        if (enviado != null) {
+            // Verde, âmbar e vermelho ficam só para o orçamento.
+            Surface(color = Cores.MarcaClara, shape = MaterialTheme.shapes.medium) {
+                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Outlined.MarkEmailRead, contentDescription = null, tint = Cores.Marca)
+                    Text(
+                        enviado,
+                        color = Cores.MarcaEscura,
+                        modifier = Modifier.padding(start = 10.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+            Text(
+                "Abra o link do e-mail, crie a senha nova e volte aqui para entrar com ela.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Cores.Secundario,
+            )
+            BotaoPrincipal("Voltar para entrar", onEntrar, Modifier.fillMaxWidth())
+        } else {
+            OutlinedTextField(
+                value = vm.email,
+                onValueChange = { vm.email = it },
+                label = { Text("E-mail") },
+                placeholder = { Text("seu@email.com") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Send,
+                    autoCorrectEnabled = false,
+                ),
+                keyboardActions = KeyboardActions(onSend = { vm.pedirLinkDeSenha() }),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            vm.erro?.let { AvisoErro(it) }
+            BotaoPrincipal("Enviar link", vm::pedirLinkDeSenha, Modifier.fillMaxWidth(), carregando = vm.carregando)
+            TextButton(onClick = onEntrar, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("Lembrou a senha? Entrar")
+            }
         }
     }
 }

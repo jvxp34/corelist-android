@@ -52,6 +52,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import br.com.comprafacil.AppContainer
 import br.com.comprafacil.ui.auth.TelaCadastro
+import br.com.comprafacil.ui.auth.TelaEsqueciSenha
 import br.com.comprafacil.ui.auth.TelaLogin
 import br.com.comprafacil.ui.compra.TelaCompra
 import br.com.comprafacil.ui.inicio.TelaInicio
@@ -66,6 +67,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable object RotaLogin
 @Serializable object RotaCadastro
+@Serializable object RotaEsqueciSenha
 @Serializable object RotaInicio
 @Serializable data class RotaListas(val novaLista: Boolean = false)
 @Serializable object RotaProdutos
@@ -111,7 +113,8 @@ fun Navegacao(app: AppContainer) {
     // A sessão manda: entrou vai para o início; saiu ou expirou volta ao login.
     LaunchedEffect(logado) {
         val atual = nav.currentBackStackEntry?.destination
-        val naEntrada = atual == null || atual.hasRoute<RotaLogin>() || atual.hasRoute<RotaCadastro>()
+        val naEntrada = atual == null || atual.hasRoute<RotaLogin>() || atual.hasRoute<RotaCadastro>() ||
+            atual.hasRoute<RotaEsqueciSenha>()
         if (logado && naEntrada) nav.irParaInicio(RotaInicio)
         if (!logado && !naEntrada) nav.irParaInicio(RotaLogin)
     }
@@ -133,7 +136,13 @@ fun Navegacao(app: AppContainer) {
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
             composable<RotaLogin> {
-                TelaLogin(onCriarConta = { nav.navigate(RotaCadastro) { launchSingleTop = true } })
+                TelaLogin(
+                    onCriarConta = { nav.navigate(RotaCadastro) { launchSingleTop = true } },
+                    onEsqueciSenha = { nav.navigate(RotaEsqueciSenha) { launchSingleTop = true } },
+                )
+            }
+            composable<RotaEsqueciSenha> {
+                TelaEsqueciSenha(onEntrar = { if (!nav.popBackStack()) nav.irParaInicio(RotaLogin) })
             }
             composable<RotaCadastro> {
                 TelaCadastro(onJaTenhoConta = { if (!nav.popBackStack()) nav.irParaInicio(RotaLogin) })

@@ -10,6 +10,7 @@ import br.com.comprafacil.AppContainer
 import br.com.comprafacil.data.Tokens
 import br.com.comprafacil.data.api.CadastroRequest
 import br.com.comprafacil.data.api.LoginRequest
+import br.com.comprafacil.data.api.PedidoDeSenha
 import br.com.comprafacil.data.api.Resultado
 import br.com.comprafacil.data.api.chamar
 import kotlinx.coroutines.launch
@@ -57,6 +58,29 @@ class AuthViewModel(private val app: AppContainer) : ViewModel() {
             carregando = true
             when (val r = chamar { app.api.cadastrar(CadastroRequest(nome.trim(), emailLimpo, senha)) }) {
                 is Resultado.Ok -> erro = fazerLogin(emailLimpo, senha)
+                is Resultado.Falha -> erro = r.mensagem
+            }
+            carregando = false
+        }
+    }
+
+    /** Esqueci a senha: texto do servidor depois de pedir o link (null = ainda não pediu). */
+    var linkEnviado by mutableStateOf<String?>(null)
+        private set
+
+    fun pedirLinkDeSenha() {
+        val emailLimpo = email.trim()
+        if (emailLimpo.isEmpty()) {
+            erro = "Informe o e-mail da sua conta."
+            return
+        }
+        viewModelScope.launch {
+            carregando = true
+            erro = null
+            when (val r = chamar { app.api.pedirLinkDeSenha(PedidoDeSenha(emailLimpo)) }) {
+                is Resultado.Ok -> linkEnviado = r.valor.detail.ifBlank {
+                    "Se existir uma conta com esse e-mail, enviamos um link para criar uma senha nova. Confira também a caixa de spam."
+                }
                 is Resultado.Falha -> erro = r.mensagem
             }
             carregando = false

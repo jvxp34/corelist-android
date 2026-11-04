@@ -47,6 +47,13 @@ data class CadastroRequest(
 data class RefreshRequest(val refresh: String)
 
 @Serializable
+data class PedidoDeSenha(val email: String)
+
+/** Respostas que só trazem um texto para mostrar ({"detail": "..."}). */
+@Serializable
+data class Mensagem(val detail: String = "")
+
+@Serializable
 data class TokenPair(val access: String, val refresh: String? = null)
 
 @Serializable
